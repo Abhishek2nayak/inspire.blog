@@ -1,0 +1,17 @@
+{
+  "name": "Inspire.blog",
+  "short_name": "Inspire",
+  "description": "A modern publishing platform for curious minds.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#3b82f6",
+  "icons": [
+    {
+      "src": "/logo.png",
+      "sizes": "any",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
