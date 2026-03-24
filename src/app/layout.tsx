@@ -44,6 +44,9 @@ export const metadata: Metadata = {
   creator: "Inspire.blog",
   publisher: "Inspire.blog",
   metadataBase: new URL("https://inspire.blog"),
+  verification: {
+    google: "Umkl9-__RukhF2xFLAzwjvx9QtQwqN_IgabCv7leFBQ",
+  },
   alternates: {
     canonical: "/",
   },
