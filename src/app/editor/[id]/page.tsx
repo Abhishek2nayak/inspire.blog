@@ -10,9 +10,10 @@ import { Skeleton } from "@/components/ui/skeleton";
 interface PostData {
   id?: string;
   title: string;
+  excerpt?: string;
   content: string;
   contentMd?: string;
-  slug?: string;
+  slug: string;
   coverImage?: string;
   metaTitle?: string;
   tags?: { tag: { name: string } }[] | string[];
@@ -55,6 +56,7 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
 
   const handleSave = async (data: {
     title: string;
+    subtitle: string;
     content: string;
     contentMd: string;
     coverImage?: string;
@@ -75,6 +77,7 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           title: data.title,
+          subtitle: data.subtitle || undefined,
           content: data.content,
           contentMd: data.contentMd,
           coverImage: data.coverImage || undefined,
@@ -113,14 +116,38 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
     : [];
 
   return (
-    <div className="mx-auto max-w-3xl px-4 py-10 sm:px-6">
-      <BlogEditor
-        initialTitle={post.title}
-        initialContent={post.content}
-        initialContentMd={post.contentMd}
-        onSave={handleSave}
-        saving={saving}
-      />
-    </div>
+    <>
+      {/* Edit mode indicator */}
+      <div className="sticky top-14 z-40 border-b border-blue-200 bg-blue-50 px-4 py-2">
+        <div className="mx-auto flex max-w-3xl items-center justify-between gap-2">
+          <div className="flex items-center gap-2">
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-blue-100 px-2.5 py-0.5 text-xs font-semibold text-blue-800">
+              <span className="h-1.5 w-1.5 rounded-full bg-blue-500 animate-pulse" />
+              Editing
+            </span>
+            <span className="truncate text-xs text-blue-700 max-w-xs">{post.title}</span>
+          </div>
+          <a
+            href={post.slug ? `/article/${post.slug}` : undefined}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-xs text-blue-600 hover:underline shrink-0"
+          >
+            View published ↗
+          </a>
+        </div>
+      </div>
+      <div className="mx-auto max-w-3xl px-4 py-10 sm:px-6">
+        <BlogEditor
+          initialTitle={post.title}
+          initialSubtitle={post.excerpt ?? ""}
+          initialContent={post.content}
+          initialContentMd={post.contentMd}
+          postId={id}
+          onSave={handleSave}
+          saving={saving}
+        />
+      </div>
+    </>
   );
 }

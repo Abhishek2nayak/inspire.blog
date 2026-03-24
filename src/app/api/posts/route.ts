@@ -102,6 +102,7 @@ export async function POST(request: Request) {
     const body = await request.json();
     const {
       title,
+      subtitle,
       content,
       tags,
       published,
@@ -127,7 +128,7 @@ export async function POST(request: Request) {
     }
 
     const readTime = calculateReadTime(content);
-    const excerpt = getExcerpt(content);
+    const excerpt = subtitle?.trim() || getExcerpt(content);
 
     // Upsert tags and connect
     let tagConnections: { tag: { connect: { id: string } } }[] = [];

@@ -131,7 +131,7 @@ export default function RegisterPage() {
         router.push("/login");
       } else {
         toast({
-          title: "Welcome to Blogosphere!",
+          title: "Welcome to Inspire.blog!",
           description: "Let's personalize your experience.",
         });
         router.push("/onboarding");

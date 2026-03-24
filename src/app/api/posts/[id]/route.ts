@@ -71,6 +71,7 @@ export async function PATCH(
     const body = await request.json();
     const {
       title,
+      subtitle,
       content,
       tags,
       published,
@@ -97,7 +98,9 @@ export async function PATCH(
     if (content !== undefined) {
       updateData.content = content;
       updateData.readTime = calculateReadTime(content);
-      updateData.excerpt = getExcerpt(content);
+      updateData.excerpt = subtitle?.trim() || getExcerpt(content);
+    } else if (subtitle !== undefined) {
+      updateData.excerpt = subtitle.trim() || undefined;
     }
 
     if (published !== undefined) {

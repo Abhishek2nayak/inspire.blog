@@ -1,6 +1,7 @@
 import React from "react";
 import Link from "next/link";
-import { Feather, Twitter, Github, Linkedin } from "lucide-react";
+import Image from "next/image";
+import { Twitter, Github, Linkedin } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
 
@@ -53,14 +54,16 @@ const Footer: React.FC = () => {
           <div className="sm:col-span-2 lg:col-span-1">
             <Link
               href="/"
-              className="inline-flex items-center gap-2 text-lg font-bold text-foreground hover:opacity-80 transition-opacity"
+              className="inline-flex items-center gap-1.5 hover:opacity-80 transition-opacity"
             >
-              <Feather className="h-5 w-5" />
-              Blogosphere
+              <Image src="/logo.png" alt="Inspire.blog" width={28} height={28} className="h-7 w-7 object-contain" />
+              <span className="text-[17px] font-semibold tracking-tight text-foreground">
+                Inspire<span className="text-muted-foreground font-normal">.blog</span>
+              </span>
             </Link>
             <p className="mt-3 max-w-xs text-sm leading-relaxed text-muted-foreground">
-              Where ideas come to life. Discover stories, insights, and
-              perspectives from writers around the world.
+              Where ideas ignite. Discover insightful articles on technology,
+              programming, design, and more — or share your own.
             </p>
             {/* Social icons */}
             <div className="mt-5 flex items-center gap-2">
@@ -150,10 +153,10 @@ const Footer: React.FC = () => {
         {/* Bottom row */}
         <div className="flex flex-col items-center justify-between gap-3 py-5 sm:flex-row">
           <p className="text-xs text-muted-foreground">
-            &copy; {new Date().getFullYear()} Blogosphere. All rights reserved.
+            &copy; {new Date().getFullYear()} Inspire.blog. All rights reserved.
           </p>
           <p className="text-xs text-muted-foreground">
-            Built with care by the Blogosphere team
+            Built with care by the Inspire.blog team
           </p>
         </div>
       </div>

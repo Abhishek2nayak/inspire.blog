@@ -14,10 +14,6 @@ interface Notification {
 }
 
 interface StoreState {
-  // Theme
-  theme: "light" | "dark";
-  toggleTheme: () => void;
-
   // Search
   searchQuery: string;
   setSearchQuery: (query: string) => void;
@@ -30,24 +26,7 @@ interface StoreState {
   addNotification: (notification: Notification) => void;
 }
 
-// Read initial theme from DOM (set by the anti-flash script in layout)
-function getInitialTheme(): "light" | "dark" {
-  if (typeof document === "undefined") return "light";
-  return document.documentElement.classList.contains("dark") ? "dark" : "light";
-}
-
 export const useStore = create<StoreState>((set) => ({
-  theme: getInitialTheme(),
-  toggleTheme: () =>
-    set((state) => {
-      const next = state.theme === "light" ? "dark" : "light";
-      if (typeof document !== "undefined") {
-        document.documentElement.classList.toggle("dark", next === "dark");
-        localStorage.setItem("theme", next);
-      }
-      return { theme: next };
-    }),
-
   searchQuery: "",
   setSearchQuery: (query) => set({ searchQuery: query }),
 

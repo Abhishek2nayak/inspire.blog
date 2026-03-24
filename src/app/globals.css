@@ -1,9 +1,6 @@
 @import "tailwindcss";
 @plugin "tailwindcss-animate";
 
-/* Class-based dark mode: applies to .dark element AND its descendants */
-@custom-variant dark (&:where(.dark, .dark *));
-
 @theme inline {
   --radius: 0.5rem;
 
@@ -50,41 +47,6 @@
   --font-sans: var(--font-inter, 'Inter'), system-ui, -apple-system, sans-serif;
   --font-serif: var(--font-lora, 'Georgia'), 'Cambria', serif;
   --font-mono: 'SFMono-Regular', 'Menlo', 'Monaco', 'Consolas', monospace;
-}
-
-/* ── Dark mode — Hashnode's deep slate navy ── */
-.dark {
-  --color-background:         hsl(222 47% 6%);
-  --color-foreground:         hsl(210 40% 96%);
-  --color-card:               hsl(222 47% 9%);
-  --color-card-foreground:    hsl(210 40% 96%);
-  --color-popover:            hsl(222 47% 9%);
-  --color-popover-foreground: hsl(210 40% 96%);
-  --color-primary:            hsl(210 40% 96%);
-  --color-primary-foreground: hsl(222 47% 11%);
-  --color-secondary:          hsl(222 47% 13%);
-  --color-secondary-foreground: hsl(210 40% 88%);
-  --color-muted:              hsl(222 47% 13%);
-  --color-muted-foreground:   hsl(215 20% 55%);
-  --color-accent:             hsl(222 47% 15%);
-  --color-accent-foreground:  hsl(210 40% 88%);
-  --color-destructive:        hsl(0 62% 50%);
-  --color-destructive-foreground: hsl(0 0% 100%);
-  --color-border:             hsl(222 47% 16%);
-  --color-input:              hsl(222 47% 16%);
-  --color-ring:               hsl(217 91% 60%);
-
-  --color-blue:               hsl(217 91% 60%);
-  --color-blue-muted:         hsl(222 47% 16%);
-
-  --color-sidebar:                  hsl(222 47% 7%);
-  --color-sidebar-foreground:       hsl(210 40% 96%);
-  --color-sidebar-primary:          hsl(210 40% 96%);
-  --color-sidebar-primary-foreground: hsl(222 47% 11%);
-  --color-sidebar-accent:           hsl(222 47% 15%);
-  --color-sidebar-accent-foreground: hsl(210 40% 88%);
-  --color-sidebar-border:           hsl(222 47% 16%);
-  --color-sidebar-ring:             hsl(217 91% 60%);
 }
 
 /* ── Base ── */

@@ -92,9 +92,6 @@ export const metadata: Metadata = {
   category: "technology",
 };
 
-// Runs before React hydration to prevent flash of wrong theme
-const themeScript = `(function(){try{var t=localStorage.getItem('theme');if(t==='dark'||((!t)&&window.matchMedia('(prefers-color-scheme:dark)').matches)){document.documentElement.classList.add('dark')}else{document.documentElement.classList.remove('dark')}}catch(e){}})();`;
-
 const jsonLd = {
   "@context": "https://schema.org",
   "@type": "WebSite",
@@ -133,7 +130,6 @@ export default function RootLayout({
       suppressHydrationWarning
     >
       <head>
-        <script dangerouslySetInnerHTML={{ __html: themeScript }} />
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}

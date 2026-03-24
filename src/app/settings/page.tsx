@@ -13,7 +13,6 @@ import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
 import { getInitials } from "@/lib/utils";
-import { useStore } from "@/store/useStore";
 import {
   User,
   Lock,
@@ -47,8 +46,6 @@ export default function SettingsPage() {
   const { data: session, status } = useSession();
   const router = useRouter();
   const { toast } = useToast();
-  const { theme, toggleTheme } = useStore();
-  const darkMode = theme === "dark";
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [savingPassword, setSavingPassword] = useState(false);
@@ -556,25 +553,17 @@ export default function SettingsPage() {
         {/* APPEARANCE TAB */}
         <TabsContent value="appearance">
           <div className="space-y-6">
-            <h3 className="text-sm font-semibold text-foreground">Theme</h3>
+            <h3 className="text-sm font-semibold text-foreground">Appearance</h3>
 
             <div className="p-5 bg-muted/20 rounded-2xl border border-border">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-foreground">Dark mode</p>
+                  <p className="text-sm font-medium text-foreground">Theme</p>
                   <p className="text-xs text-muted-foreground mt-0.5">
-                    Switch to a darker color scheme
+                    Inspire.blog uses a clean light theme optimised for readability.
                   </p>
                 </div>
-                <Switch
-                  checked={darkMode}
-                  onCheckedChange={() => {
-                    toggleTheme();
-                    toast({
-                      title: !darkMode ? "Dark mode enabled" : "Light mode enabled",
-                    });
-                  }}
-                />
+                <span className="text-xs font-medium text-muted-foreground border border-border rounded-full px-3 py-1">Light</span>
               </div>
             </div>
 

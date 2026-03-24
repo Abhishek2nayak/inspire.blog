@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
+import { cache } from "react";
 import type { Metadata } from "next";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/session";
@@ -20,7 +21,7 @@ interface ArticlePageProps {
   params: Promise<{ slug: string }>;
 }
 
-async function getPost(slug: string) {
+const getPost = cache(async function getPost(slug: string) {
   const post = await prisma.post.findUnique({
     where: { slug, published: true },
     include: {
@@ -67,7 +68,7 @@ async function getPost(slug: string) {
   });
 
   return post;
-}
+});
 
 export async function generateMetadata({
   params,

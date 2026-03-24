@@ -19,6 +19,7 @@ export default function NewPostPage() {
 
   const handleSave = async (data: {
     title: string;
+    subtitle: string;
     content: string;
     contentMd: string;
     coverImage?: string;
@@ -40,6 +41,7 @@ export default function NewPostPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           title: data.title,
+          subtitle: data.subtitle || undefined,
           content: data.content,
           contentMd: data.contentMd,
           coverImage: data.coverImage,
@@ -79,8 +81,20 @@ export default function NewPostPage() {
   if (!session) return null;
 
   return (
-    <div className="mx-auto max-w-3xl px-4 py-10 sm:px-6">
-      <BlogEditor onSave={handleSave} saving={saving} />
-    </div>
+    <>
+      {/* Edit mode indicator */}
+      <div className="sticky top-14 z-40 border-b border-amber-200 bg-amber-50 px-4 py-2">
+        <div className="mx-auto flex max-w-3xl items-center gap-2">
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-semibold text-amber-800">
+            <span className="h-1.5 w-1.5 rounded-full bg-amber-500 animate-pulse" />
+            New post
+          </span>
+          <span className="text-xs text-amber-700">Drafts auto-save every 2 seconds</span>
+        </div>
+      </div>
+      <div className="mx-auto max-w-3xl px-4 py-10 sm:px-6">
+        <BlogEditor onSave={handleSave} saving={saving} />
+      </div>
+    </>
   );
 }

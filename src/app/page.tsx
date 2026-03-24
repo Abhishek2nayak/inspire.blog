@@ -179,7 +179,7 @@ export default async function HomePage() {
                 {["Help", "About", "Privacy", "Terms"].map((l) => (
                   <a key={l} href="#" className="hover:text-foreground transition-colors">{l}</a>
                 ))}
-                <span className="w-full text-[10px] opacity-50">© 2025 Blogosphere</span>
+                <span className="w-full text-[10px] opacity-50">© 2025 Inspire.blog</span>
               </div>
             </div>
           </aside>

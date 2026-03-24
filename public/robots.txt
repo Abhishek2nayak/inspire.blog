@@ -1,0 +1,10 @@
+User-agent: *
+Allow: /
+
+# Block editor and dashboard from indexing
+Disallow: /editor/
+Disallow: /dashboard/
+Disallow: /settings
+Disallow: /api/
+
+Sitemap: https://inspire.blog/sitemap.xml

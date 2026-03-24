@@ -31,8 +31,8 @@ export async function generateMetadata({ params }: SeriesPageProps) {
   const series = await prisma.series.findUnique({ where: { slug } });
   if (!series) return { title: "Series not found" };
   return {
-    title: `${series.title} — Blogosphere`,
-    description: series.description ?? "A series on Blogosphere",
+    title: `${series.title} — Inspire.blog`,
+    description: series.description ?? "A series on Inspire.blog",
   };
 }
 

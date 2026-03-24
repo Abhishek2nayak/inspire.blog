@@ -16,8 +16,6 @@ import {
   LayoutDashboard,
   User,
   Bookmark,
-  Moon,
-  Sun,
   ChevronDown,
 } from "lucide-react";
 import { cn, getInitials } from "@/lib/utils";
@@ -30,7 +28,6 @@ import {
   DropdownMenuItem,
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
-import { useStore } from "@/store/useStore";
 
 const Navbar: React.FC = () => {
   const { data: session, status } = useSession();
@@ -42,17 +39,9 @@ const Navbar: React.FC = () => {
   const [searchOpen, setSearchOpen] = useState(false);
   const searchInputRef = useRef<HTMLInputElement>(null);
 
-  const { theme, toggleTheme } = useStore();
-  const isDark = theme === "dark";
-
   const unreadNotifications = 0;
   const isLoggedIn = status === "authenticated" && !!session?.user;
   const user = session?.user;
-
-  useEffect(() => {
-    const html = document.documentElement;
-    isDark ? html.classList.add("dark") : html.classList.remove("dark");
-  }, [isDark]);
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 4);
@@ -154,15 +143,6 @@ const Navbar: React.FC = () => {
 
         {/* Right actions */}
         <div className="flex items-center gap-1">
-          {/* Theme toggle */}
-          <button
-            onClick={toggleTheme}
-            aria-label="Toggle theme"
-            className="flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-          >
-            {isDark ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
-          </button>
-
           {isLoggedIn ? (
             <>
               {/* Write button */}

@@ -130,6 +130,9 @@ import {
   Tag,
   ChevronDown,
   ChevronUp,
+  FileCode,
+  Copy,
+  ClipboardCheck,
   Heading1,
   Heading2,
   Heading3,
@@ -227,12 +230,129 @@ const SLASH_COMMANDS = [
 
 type SlashCommand = (typeof SLASH_COMMANDS)[number];
 
+const DRAFT_KEY = "inspire_draft_new";
+
+/* ── Simple markdown → HTML converter ── */
+function escHtml(s: string) {
+  return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+}
+function applyInline(t: string): string {
+  t = t.replace(/!\[([^\]]*)\]\(([^)]+)\)/g, '<img alt="$1" src="$2">');
+  t = t.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2">$1</a>');
+  t = t.replace(/\*\*([^*\n]+)\*\*/g, "<strong>$1</strong>");
+  t = t.replace(/__([^_\n]+)__/g, "<strong>$1</strong>");
+  t = t.replace(/\*([^*\n]+)\*/g, "<em>$1</em>");
+  t = t.replace(/_([^_\n]+)_/g, "<em>$1</em>");
+  t = t.replace(/`([^`\n]+)`/g, "<code>$1</code>");
+  return t;
+}
+function markdownToHtml(md: string): string {
+  const lines = md.split("\n");
+  const out: string[] = [];
+  let i = 0;
+  while (i < lines.length) {
+    const line = lines[i];
+    // Fenced code block
+    if (line.startsWith("```")) {
+      const lang = line.slice(3).trim();
+      const code: string[] = [];
+      i++;
+      while (i < lines.length && !lines[i].startsWith("```")) { code.push(lines[i]); i++; }
+      out.push(`<pre><code class="language-${lang}">${escHtml(code.join("\n"))}</code></pre>`);
+      i++; continue;
+    }
+    // Heading
+    const hm = line.match(/^(#{1,6})\s+(.+)/);
+    if (hm) { const l = hm[1].length; out.push(`<h${l}>${applyInline(hm[2])}</h${l}>`); i++; continue; }
+    // HR
+    if (/^---+$/.test(line.trim())) { out.push("<hr>"); i++; continue; }
+    // Blockquote
+    if (line.startsWith("> ")) {
+      const ql: string[] = [];
+      while (i < lines.length && lines[i].startsWith("> ")) { ql.push(lines[i].slice(2)); i++; }
+      out.push(`<blockquote><p>${applyInline(ql.join(" "))}</p></blockquote>`);
+      continue;
+    }
+    // Unordered list
+    if (/^[-*]\s+/.test(line)) {
+      const items: string[] = [];
+      while (i < lines.length && /^[-*]\s+/.test(lines[i])) {
+        items.push(`<li>${applyInline(lines[i].replace(/^[-*]\s+/, ""))}</li>`); i++;
+      }
+      out.push(`<ul>${items.join("")}</ul>`); continue;
+    }
+    // Ordered list
+    if (/^\d+\.\s+/.test(line)) {
+      const items: string[] = [];
+      while (i < lines.length && /^\d+\.\s+/.test(lines[i])) {
+        items.push(`<li>${applyInline(lines[i].replace(/^\d+\.\s+/, ""))}</li>`); i++;
+      }
+      out.push(`<ol>${items.join("")}</ol>`); continue;
+    }
+    // Empty
+    if (line.trim() === "") { i++; continue; }
+    // Paragraph
+    const para: string[] = [];
+    while (i < lines.length && lines[i].trim() !== "" &&
+      !/^#{1,6}\s/.test(lines[i]) && !lines[i].startsWith("```") &&
+      !lines[i].startsWith("> ") && !/^[-*]\s/.test(lines[i]) &&
+      !/^\d+\.\s/.test(lines[i]) && !/^---+$/.test(lines[i].trim())) {
+      para.push(lines[i]); i++;
+    }
+    if (para.length) out.push(`<p>${applyInline(para.join(" "))}</p>`);
+  }
+  return out.join("\n");
+}
+
+/* ── TipTap JSON → Markdown serialiser ── */
+type TipNode = { type: string; attrs?: Record<string, unknown>; content?: TipNode[]; text?: string; marks?: { type: string; attrs?: Record<string, unknown> }[] };
+
+function inlineToMd(nodes: TipNode[] | undefined): string {
+  if (!nodes) return "";
+  return nodes.map((n) => {
+    if (n.type === "text") {
+      let t = n.text ?? "";
+      const marks = n.marks ?? [];
+      if (marks.some((m) => m.type === "bold")) t = `**${t}**`;
+      if (marks.some((m) => m.type === "italic")) t = `*${t}*`;
+      if (marks.some((m) => m.type === "code")) t = `\`${t}\``;
+      const link = marks.find((m) => m.type === "link");
+      if (link) t = `[${t}](${link.attrs?.href ?? ""})`;
+      return t;
+    }
+    if (n.type === "hardBreak") return "\n";
+    return "";
+  }).join("");
+}
+
+function nodeToMd(node: TipNode, depth = 0): string {
+  switch (node.type) {
+    case "doc": return (node.content ?? []).map((n) => nodeToMd(n)).join("");
+    case "paragraph": return (node.content ? inlineToMd(node.content) : "") + "\n\n";
+    case "heading": return "#".repeat((node.attrs?.level as number) ?? 1) + " " + inlineToMd(node.content) + "\n\n";
+    case "blockquote": return (node.content ?? []).map((n) => "> " + nodeToMd(n).trimEnd()).join("\n") + "\n\n";
+    case "bulletList": return (node.content ?? []).map((item) => "  ".repeat(depth) + "- " + inlineToMd(item.content?.[0]?.content)).join("\n") + "\n\n";
+    case "orderedList": return (node.content ?? []).map((item, i) => "  ".repeat(depth) + `${i + 1}. ` + inlineToMd(item.content?.[0]?.content)).join("\n") + "\n\n";
+    case "codeBlock": {
+      const lang = (node.attrs?.language as string) || "";
+      const code = node.content?.[0]?.text ?? "";
+      return "```" + lang + "\n" + code + "\n```\n\n";
+    }
+    case "image": return `![${node.attrs?.alt ?? ""}](${node.attrs?.src ?? ""})\n\n`;
+    case "horizontalRule": return "---\n\n";
+    default: return "";
+  }
+}
+
 interface BlogEditorProps {
   initialTitle?: string;
+  initialSubtitle?: string;
   initialContent?: string;
   initialContentMd?: string;
+  postId?: string; // if editing an existing post, skip draft restore
   onSave: (data: {
     title: string;
+    subtitle: string;
     content: string;
     contentMd: string;
     coverImage?: string;
@@ -248,7 +368,9 @@ interface BlogEditorProps {
 /* ── Main component ── */
 export default function BlogEditor({
   initialTitle = "",
+  initialSubtitle = "",
   initialContent = "",
+  postId,
   onSave,
   saving,
 }: BlogEditorProps) {
@@ -256,6 +378,7 @@ export default function BlogEditor({
 
   /* Meta state */
   const [title, setTitle] = useState(initialTitle);
+  const [subtitle, setSubtitle] = useState(initialSubtitle);
   const [coverImage, setCoverImage] = useState<string | undefined>();
   const [uploadingCover, setUploadingCover] = useState(false);
   const [tags, setTags] = useState<string[]>([]);
@@ -264,6 +387,16 @@ export default function BlogEditor({
   const [metaDesc, setMetaDesc] = useState("");
   const [canonicalUrl, setCanonicalUrl] = useState("");
   const [showSeo, setShowSeo] = useState(false);
+
+  /* Draft restore state */
+  const [draftBanner, setDraftBanner] = useState(false);
+  const autoSaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  /* Markdown source view */
+  const [showMarkdown, setShowMarkdown] = useState(false);
+  const [markdownText, setMarkdownText] = useState("");
+  const [mdCopied, setMdCopied] = useState(false);
+  const mdSyncTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   /* Slash command state */
   const [slashOpen, setSlashOpen] = useState(false);
@@ -332,8 +465,34 @@ export default function BlogEditor({
       } else {
         setSlashOpen(false);
       }
+      // Auto-save draft
+      if (!postId) triggerAutoSave(title, subtitle, editor.getJSON() as unknown as string);
     },
   });
+
+  /* Markdown open/close/sync — defined after editor */
+  const openMarkdown = useCallback(() => {
+    if (!editor) return;
+    setMarkdownText(nodeToMd(editor.getJSON() as TipNode).trimEnd());
+    setShowMarkdown(true);
+  }, [editor]);
+
+  const closeMarkdown = useCallback(() => {
+    if (editor && markdownText.trim()) {
+      editor.commands.setContent(markdownToHtml(markdownText));
+    }
+    setShowMarkdown(false);
+  }, [editor, markdownText]);
+
+  const handleMarkdownChange = useCallback((val: string) => {
+    setMarkdownText(val);
+    if (mdSyncTimer.current) clearTimeout(mdSyncTimer.current);
+    mdSyncTimer.current = setTimeout(() => {
+      if (editor && val.trim()) {
+        editor.commands.setContent(markdownToHtml(val));
+      }
+    }, 500);
+  }, [editor]);
 
   /* Close slash menu when clicking outside */
   useEffect(() => {
@@ -344,6 +503,44 @@ export default function BlogEditor({
     };
     document.addEventListener("mousedown", handleClick);
     return () => document.removeEventListener("mousedown", handleClick);
+  }, []);
+
+  /* Restore draft on mount (new posts only) */
+  useEffect(() => {
+    if (postId || initialContent) return; // editing existing — skip
+    try {
+      const saved = localStorage.getItem(DRAFT_KEY);
+      if (saved) {
+        const draft = JSON.parse(saved);
+        if (draft.title || draft.subtitle || draft.content) setDraftBanner(true);
+      }
+    } catch { /* ignore */ }
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const restoreDraft = () => {
+    try {
+      const saved = localStorage.getItem(DRAFT_KEY);
+      if (!saved) return;
+      const draft = JSON.parse(saved);
+      if (draft.title) setTitle(draft.title);
+      if (draft.subtitle) setSubtitle(draft.subtitle);
+      if (draft.content && editor) editor.commands.setContent(draft.content);
+    } catch { /* ignore */ }
+    setDraftBanner(false);
+  };
+
+  const discardDraft = () => {
+    localStorage.removeItem(DRAFT_KEY);
+    setDraftBanner(false);
+  };
+
+  /* Auto-save to localStorage (debounced 2s) */
+  const triggerAutoSave = useCallback((t: string, s: string, content: string) => {
+    if (autoSaveTimer.current) clearTimeout(autoSaveTimer.current);
+    autoSaveTimer.current = setTimeout(() => {
+      try { localStorage.setItem(DRAFT_KEY, JSON.stringify({ title: t, subtitle: s, content })); }
+      catch { /* ignore */ }
+    }, 2000);
   }, []);
 
   /* Filtered slash commands (derived) */
@@ -503,8 +700,13 @@ export default function BlogEditor({
       toast({ title: "Add a title before saving", variant: "destructive" });
       return;
     }
+    // Clear draft on intentional save
+    if (!postId) {
+      try { localStorage.removeItem(DRAFT_KEY); } catch { /* ignore */ }
+    }
     onSave({
       title,
+      subtitle,
       content: editor?.getHTML() ?? "",
       contentMd: editor?.getText() ?? "",
       coverImage,
@@ -538,19 +740,95 @@ export default function BlogEditor({
         </label>
       )}
 
+      {/* Draft restore banner */}
+      {draftBanner && (
+        <div className="mb-4 flex items-center justify-between rounded-lg border border-amber-200 bg-amber-50 px-4 py-2.5 text-sm text-amber-800">
+          <span>You have an unsaved draft. Restore it?</span>
+          <div className="flex gap-2 ml-4">
+            <button onClick={restoreDraft} className="font-medium underline underline-offset-2 hover:opacity-80">Restore</button>
+            <button onClick={discardDraft} className="opacity-60 hover:opacity-100">Discard</button>
+          </div>
+        </div>
+      )}
+
       {/* Title */}
       <TextareaAutosize
         value={title}
-        onChange={(e) => setTitle(e.target.value)}
+        onChange={(e) => {
+          setTitle(e.target.value);
+          if (!postId) triggerAutoSave(e.target.value, subtitle, editor?.getJSON() as unknown as string ?? "");
+        }}
         placeholder="Article title…"
         className="mb-2 w-full resize-none bg-transparent font-serif text-3xl font-bold leading-tight text-foreground placeholder:text-muted-foreground/30 focus:outline-none sm:text-4xl"
         maxRows={5}
       />
 
+      {/* Subtitle */}
+      <TextareaAutosize
+        value={subtitle}
+        onChange={(e) => {
+          setSubtitle(e.target.value);
+          if (!postId) triggerAutoSave(title, e.target.value, editor?.getJSON() as unknown as string ?? "");
+        }}
+        placeholder="Add a subtitle… (optional)"
+        className="mb-4 w-full resize-none bg-transparent text-lg leading-snug text-muted-foreground placeholder:text-muted-foreground/30 focus:outline-none"
+        maxRows={3}
+      />
+
+      {/* ── Editor mode toggle ── */}
+      <div className="mb-3 flex items-center justify-between">
+        <div className="flex rounded-lg border border-border bg-muted/40 p-0.5">
+          <button
+            onClick={closeMarkdown}
+            className={cn(
+              "flex items-center gap-1.5 rounded-md px-3 py-1 text-xs font-medium transition-all",
+              !showMarkdown ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
+            )}
+          >
+            <Type className="h-3 w-3" />
+            Rich editor
+          </button>
+          <button
+            onClick={openMarkdown}
+            className={cn(
+              "flex items-center gap-1.5 rounded-md px-3 py-1 text-xs font-medium transition-all",
+              showMarkdown ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
+            )}
+          >
+            <FileCode className="h-3 w-3" />
+            Markdown
+          </button>
+        </div>
+        {showMarkdown && (
+          <button
+            onClick={async () => {
+              await navigator.clipboard.writeText(markdownText);
+              setMdCopied(true);
+              setTimeout(() => setMdCopied(false), 2000);
+            }}
+            className="flex items-center gap-1.5 rounded-lg border border-border px-2.5 py-1 text-xs text-muted-foreground transition-colors hover:text-foreground"
+          >
+            {mdCopied ? <ClipboardCheck className="h-3.5 w-3.5 text-green-600" /> : <Copy className="h-3.5 w-3.5" />}
+            {mdCopied ? "Copied!" : "Copy"}
+          </button>
+        )}
+      </div>
+
       <div className="mb-6 border-t border-border" />
 
+      {/* ── Markdown editor ── */}
+      {showMarkdown && (
+        <textarea
+          value={markdownText}
+          onChange={(e) => handleMarkdownChange(e.target.value)}
+          className="w-full min-h-[480px] resize-y rounded-xl border border-border bg-muted/20 p-4 font-mono text-sm leading-relaxed text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring"
+          placeholder="# Your article in Markdown…"
+          spellCheck={false}
+        />
+      )}
+
       {/* ── TipTap editor wrapper ── */}
-      <div className="relative min-h-[480px]">
+      <div className={cn("relative min-h-[480px]", showMarkdown && "hidden")}>
         {/* BubbleMenu */}
         {editor && (
           <BubbleMenu

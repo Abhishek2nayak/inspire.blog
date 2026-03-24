@@ -62,7 +62,7 @@ export async function generateMetadata({ params }: TagPageProps) {
   const tag = await prisma.tag.findUnique({ where: { slug } });
   if (!tag) return { title: "Tag not found" };
   return {
-    title: `#${tag.name} — Blogosphere`,
+    title: `#${tag.name} — Inspire.blog`,
     description: `Articles tagged with ${tag.name}`,
   };
 }

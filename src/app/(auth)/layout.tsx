@@ -17,7 +17,7 @@ export default function AuthLayout({
               <span className="text-[#0d0d0d] font-bold text-lg leading-none">B</span>
             </div>
             <span className="text-xl font-bold tracking-tight text-white">
-              Blogosphere
+              Inspire.blog
             </span>
           </Link>
         </div>
@@ -52,7 +52,7 @@ export default function AuthLayout({
         {/* Footer quote */}
         <div>
           <blockquote className="text-white/50 text-sm italic leading-relaxed">
-            &quot;Blogosphere changed how I share ideas. I found my audience in
+            &quot;Inspire.blog changed how I share ideas. I found my audience in
             weeks.&quot;
             <br />
             <span className="not-italic text-white/40 text-xs mt-1 block">
@@ -70,7 +70,7 @@ export default function AuthLayout({
             <div className="w-7 h-7 bg-black flex items-center justify-center rounded-sm">
               <span className="text-white font-bold text-sm leading-none">B</span>
             </div>
-            <span className="text-lg font-bold text-gray-900">Blogosphere</span>
+            <span className="text-lg font-bold text-gray-900">Inspire.blog</span>
           </Link>
         </div>
 

@@ -116,7 +116,7 @@ export default function OnboardingPage() {
               Hey {userName}!
             </h1>
             <p className="text-lg text-muted-foreground leading-relaxed">
-              Welcome to Blogosphere. Let&apos;s personalize your feed so you
+              Welcome to Inspire.blog. Let&apos;s personalize your feed so you
               see content that matters to you.
             </p>
           </div>

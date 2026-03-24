@@ -60,7 +60,7 @@ export async function generateMetadata({
   }
 
   return {
-    title: `${user.name || "User"} — Blogosphere`,
+    title: `${user.name || "User"} — Inspire.blog`,
     description: user.bio || `Read articles by ${user.name}`,
     openGraph: {
       title: `${user.name || "User"}`,

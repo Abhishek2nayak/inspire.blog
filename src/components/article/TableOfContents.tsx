@@ -28,10 +28,24 @@ export default function TableOfContents({ content: _content }: TableOfContentsPr
 
     els.forEach((el, idx) => {
       const level = el.tagName === "H2" ? 2 : 3;
-      // Assign id if not present
+
+      // Get clean text: clone the element, remove any <a> children that are
+      // purely navigation anchors (empty text or only contain icon/svg content),
+      // then read innerText so we get the visible rendered text only.
+      const clone = el.cloneNode(true) as HTMLElement;
+      clone.querySelectorAll("a").forEach((a) => {
+        // If the anchor has no visible text (icon-only), remove it entirely
+        if (!a.innerText?.trim()) a.remove();
+      });
+      const text = clone.innerText?.trim() || clone.textContent?.trim() || "";
+
+      // Skip empty headings or very short ones (< 2 chars)
+      if (text.length < 2) return;
+
+      // Assign id based on clean text if not already set
       if (!el.id) {
-        const slug = el.textContent
-          ?.toLowerCase()
+        const slug = text
+          .toLowerCase()
           .replace(/\s+/g, "-")
           .replace(/[^a-z0-9-]/g, "")
           .slice(0, 60);
@@ -39,7 +53,7 @@ export default function TableOfContents({ content: _content }: TableOfContentsPr
       }
       extracted.push({
         id: el.id,
-        text: el.textContent || "",
+        text,
         level: level as 2 | 3,
       });
     });
