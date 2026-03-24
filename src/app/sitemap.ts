@@ -1,7 +1,8 @@
 import { MetadataRoute } from "next";
 import { prisma } from "@/lib/prisma";
 
-const BASE_URL = "https://inspire.blog";
+const BASE_URL =
+  process.env.NEXT_PUBLIC_APP_URL || "https://inspire-blog-five.vercel.app";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // Static public pages

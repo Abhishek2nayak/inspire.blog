@@ -43,7 +43,7 @@ export const metadata: Metadata = {
   authors: [{ name: "Inspire.blog" }],
   creator: "Inspire.blog",
   publisher: "Inspire.blog",
-  metadataBase: new URL("https://inspire.blog"),
+  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || "https://inspire-blog-five.vercel.app"),
   verification: {
     google: "Umkl9-__RukhF2xFLAzwjvx9QtQwqN_IgabCv7leFBQ",
   },
