@@ -7,7 +7,7 @@ const nextConfig: NextConfig = {
       { protocol: "http", hostname: "localhost" },
     ],
   },
-  serverExternalPackages: ["@prisma/client"],
+  serverExternalPackages: ["@prisma/client", "firebase-admin", "cloudinary"],
 };
 
 export default nextConfig;

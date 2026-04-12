@@ -6,6 +6,7 @@ import { cn, formatDate, getExcerpt, getInitials } from "@/lib/utils";
 import type { PostWithAuthor } from "@/types";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
+import Image from "next/image";
 import { Heart, Bookmark, MessageCircle, Clock } from "lucide-react";
 
 interface ArticleCardProps {
@@ -15,7 +16,6 @@ interface ArticleCardProps {
 
 const ArticleCard: React.FC<ArticleCardProps> = ({ post, className }) => {
   const [isBookmarked, setIsBookmarked] = useState(false);
-
   const excerpt = post.excerpt || getExcerpt(post.content, 160);
 
   const handleBookmark = async (e: React.MouseEvent) => {
@@ -32,11 +32,11 @@ const ArticleCard: React.FC<ArticleCardProps> = ({ post, className }) => {
   return (
     <article
       className={cn(
-        "py-6 border-b border-border group transition-all",
+        "py-6 border-b border-border group transition-all hover:bg-muted/20 -mx-1 px-1 rounded-xl",
         className
       )}
     >
-      <div className="flex gap-5 sm:gap-6">
+      <div className="flex gap-4 sm:gap-6">
         {/* Content */}
         <div className="flex-1 min-w-0 space-y-2">
           {/* Author row */}
@@ -48,34 +48,29 @@ const ArticleCard: React.FC<ArticleCardProps> = ({ post, className }) => {
             >
               <Avatar className="h-5 w-5">
                 {post.author.image && (
-                  <AvatarImage
-                    src={post.author.image}
-                    alt={post.author.name || ""}
-                  />
+                  <AvatarImage src={post.author.image} alt={post.author.name || ""} />
                 )}
                 <AvatarFallback className="text-[9px] bg-muted text-muted-foreground font-medium">
                   {getInitials(post.author.name || "U")}
                 </AvatarFallback>
               </Avatar>
-              <span className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-                {post.author.name}
-              </span>
+              <span className="text-xs font-medium text-foreground">{post.author.name}</span>
             </Link>
             <span className="text-muted-foreground/40 hidden sm:inline">·</span>
-            <span className="text-sm text-muted-foreground hidden sm:inline">
+            <span className="text-xs text-muted-foreground hidden sm:inline">
               {formatDate(post.createdAt)}
             </span>
           </div>
 
           {/* Title */}
           <Link href={`/article/${post.slug}`} className="block">
-            <h2 className="font-bold font-sans text-foreground text-lg leading-snug group-hover:opacity-70 transition-opacity line-clamp-2">
+            <h2 className="font-bold font-sans text-foreground text-base sm:text-lg leading-snug group-hover:opacity-70 transition-opacity line-clamp-2">
               {post.title}
             </h2>
           </Link>
 
-          {/* Excerpt */}
-          <Link href={`/article/${post.slug}`} className="block">
+          {/* Excerpt — hidden on very small screens */}
+          <Link href={`/article/${post.slug}`} className="hidden sm:block">
             <p className="text-sm text-muted-foreground leading-relaxed line-clamp-2">
               {excerpt}
             </p>
@@ -95,8 +90,8 @@ const ArticleCard: React.FC<ArticleCardProps> = ({ post, className }) => {
                   onClick={(e) => e.stopPropagation()}
                 >
                   <Badge
-                    variant="outline"
-                    className="text-xs px-2 py-0.5 cursor-pointer hover:bg-foreground hover:text-background hover:border-foreground transition-colors"
+                    variant="secondary"
+                    className="text-xs rounded-full cursor-pointer hover:bg-foreground hover:text-background transition-colors"
                   >
                     {tag.name}
                   </Badge>
@@ -107,6 +102,7 @@ const ArticleCard: React.FC<ArticleCardProps> = ({ post, className }) => {
             {/* Actions */}
             <div className="flex items-center gap-0.5">
               <button
+                aria-label="Like"
                 className="flex items-center gap-1 px-2 py-1 text-xs text-muted-foreground hover:text-foreground rounded-lg hover:bg-muted transition-colors cursor-pointer"
                 onClick={(e) => e.stopPropagation()}
               >
@@ -115,13 +111,12 @@ const ArticleCard: React.FC<ArticleCardProps> = ({ post, className }) => {
               </button>
 
               <button
+                aria-label="Comments"
                 className="flex items-center gap-1 px-2 py-1 text-xs text-muted-foreground hover:text-foreground rounded-lg hover:bg-muted transition-colors cursor-pointer"
                 onClick={(e) => e.stopPropagation()}
               >
                 <MessageCircle className="h-3.5 w-3.5" />
-                {post._count.comments > 0 && (
-                  <span>{post._count.comments}</span>
-                )}
+                {post._count.comments > 0 && <span>{post._count.comments}</span>}
               </button>
 
               <button
@@ -134,12 +129,7 @@ const ArticleCard: React.FC<ArticleCardProps> = ({ post, className }) => {
                 )}
                 aria-label={isBookmarked ? "Remove bookmark" : "Bookmark"}
               >
-                <Bookmark
-                  className={cn(
-                    "h-3.5 w-3.5",
-                    isBookmarked && "fill-current"
-                  )}
-                />
+                <Bookmark className={cn("h-3.5 w-3.5", isBookmarked && "fill-current")} />
               </button>
             </div>
           </div>
@@ -151,11 +141,13 @@ const ArticleCard: React.FC<ArticleCardProps> = ({ post, className }) => {
             href={`/article/${post.slug}`}
             className="hidden sm:block flex-shrink-0"
           >
-            <div className="w-24 h-24 rounded overflow-hidden ml-4">
-              <img
+            <div className="relative w-28 h-20 sm:w-32 sm:h-24 rounded-xl overflow-hidden">
+              <Image
                 src={post.coverImage}
                 alt={post.title}
-                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                fill
+                sizes="(max-width: 640px) 112px, 128px"
+                className="object-cover group-hover:scale-105 transition-transform duration-500"
               />
             </div>
           </Link>

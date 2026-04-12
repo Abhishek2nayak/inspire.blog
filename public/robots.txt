@@ -7,4 +7,4 @@ Disallow: /dashboard/
 Disallow: /settings
 Disallow: /api/
 
-Sitemap: https://inspire.blog/sitemap.xml
+Sitemap: https://inspire-blog-five.vercel.app/sitemap.xml

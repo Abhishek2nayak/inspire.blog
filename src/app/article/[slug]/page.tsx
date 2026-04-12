@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 import { cache } from "react";
 import type { Metadata } from "next";
 import { prisma } from "@/lib/prisma";
@@ -15,6 +16,9 @@ import ReadingProgressBar from "@/components/article/ReadingProgressBar";
 import TableOfContents from "@/components/article/TableOfContents";
 import ReactionBar from "@/components/article/ReactionBar";
 import FollowButton from "@/components/shared/FollowButton";
+import RelatedPosts from "@/components/article/RelatedPosts";
+import NewsletterSignup from "@/components/shared/NewsletterSignup";
+import SocialShare from "@/components/article/SocialShare";
 import { getInitials } from "@/lib/utils";
 
 interface ArticlePageProps {
@@ -80,16 +84,32 @@ export async function generateMetadata({
     return { title: "Article Not Found" };
   }
 
+  const title = post.metaTitle || post.title;
+  const description =
+    post.excerpt ||
+    `Read "${post.title}" by ${post.author.name} on Inspire.blog`;
+  const images = post.coverImage ? [post.coverImage] : ["/og-image.png"];
+
   return {
-    title: post.metaTitle || post.title,
-    description: post.excerpt || undefined,
+    title,
+    description,
+    alternates: {
+      canonical: `/article/${slug}`,
+    },
     openGraph: {
-      title: post.metaTitle || post.title,
-      description: post.excerpt || undefined,
+      title,
+      description,
       type: "article",
       publishedTime: post.createdAt.toISOString(),
+      modifiedTime: post.updatedAt.toISOString(),
       authors: [post.author.name || ""],
-      images: post.coverImage ? [post.coverImage] : undefined,
+      images,
+    },
+    twitter: {
+      card: "summary_large_image",
+      title,
+      description,
+      images,
     },
   };
 }
@@ -103,10 +123,12 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
   }
 
   // Increment views (fire and forget)
-  prisma.post.update({
-    where: { id: post.id },
-    data: { views: { increment: 1 } },
-  }).catch(() => {});
+  prisma.post
+    .update({
+      where: { id: post.id },
+      data: { views: { increment: 1 } },
+    })
+    .catch(() => {});
 
   const currentUser = await getCurrentUser();
 
@@ -131,7 +153,7 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
     });
   }
   const reactionGroups = Array.from(reactionMap.entries()).map(
-    ([emoji, data]) => ({ emoji, ...data })
+    ([emoji, data]) => ({ emoji, ...data }),
   );
 
   // Check if current user follows the author
@@ -150,20 +172,51 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
 
   const authorInitials = getInitials(post.author.name || "U");
 
+  const baseUrl =
+    process.env.NEXT_PUBLIC_APP_URL || "https://inspire-blog-five.vercel.app";
+  const articleUrl = `${baseUrl}/article/${post.slug}`;
+
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "Article",
+    headline: post.metaTitle || post.title,
+    description: post.excerpt || "",
+    image: post.coverImage || undefined,
+    url: articleUrl,
+    datePublished: post.createdAt.toISOString(),
+    dateModified: post.updatedAt.toISOString(),
+    author: {
+      "@type": "Person",
+      name: post.author.name || "Author",
+      url: `${baseUrl}/profile/${post.author.id}`,
+    },
+    publisher: {
+      "@type": "Organization",
+      name: "Inspire.blog",
+      url: baseUrl,
+    },
+  };
+
   return (
     <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
       <ReadingProgressBar />
 
       <main className="min-h-screen bg-background">
         {/* Hero / Cover image */}
         {post.coverImage && (
-          <div className="relative w-full max-h-[480px] overflow-hidden">
+          <div className="relative w-full aspect-[21/9] max-h-[480px] overflow-hidden">
             <div className="absolute inset-0 bg-gradient-to-b from-black/30 to-transparent z-10" />
-            <img
+            <Image
               src={post.coverImage}
               alt={post.title}
-              className="w-full h-full object-cover rounded-none"
-              style={{ maxHeight: "480px", width: "100%", objectFit: "cover" }}
+              fill
+              priority
+              className="object-cover"
+              sizes="100vw"
             />
           </div>
         )}
@@ -178,7 +231,10 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
                   <div className="flex flex-wrap gap-2 mb-4">
                     {post.tags.map(({ tag }) => (
                       <Link key={tag.id} href={`/tag/${tag.slug}`}>
-                        <Badge variant="secondary" className="hover:bg-secondary/80 cursor-pointer">
+                        <Badge
+                          variant="secondary"
+                          className="hover:bg-secondary/80 cursor-pointer"
+                        >
                           {tag.name}
                         </Badge>
                       </Link>
@@ -201,7 +257,10 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
                 {/* Author card */}
                 <div className="flex items-center justify-between mb-8 pb-6 border-b border-border">
                   <div className="flex items-center gap-4">
-                    <Link href={`/profile/${post.author.id}`} className="shrink-0">
+                    <Link
+                      href={`/profile/${post.author.id}`}
+                      className="shrink-0"
+                    >
                       <Avatar className="h-12 w-12">
                         <AvatarImage
                           src={post.author.image || undefined}
@@ -269,7 +328,10 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
 
                 {/* Author bio card */}
                 <div className="bg-muted/50 rounded-2xl p-6 flex gap-5 items-start">
-                  <Link href={`/profile/${post.author.id}`} className="shrink-0">
+                  <Link
+                    href={`/profile/${post.author.id}`}
+                    className="shrink-0"
+                  >
                     <Avatar className="h-16 w-16">
                       <AvatarImage
                         src={post.author.image || undefined}
@@ -291,7 +353,14 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
                         </Link>
                         {"_count" in post.author && (
                           <p className="text-xs text-muted-foreground mt-0.5">
-                            {(post.author as typeof post.author & { _count: { posts: number } })._count.posts} posts
+                            {
+                              (
+                                post.author as typeof post.author & {
+                                  _count: { posts: number };
+                                }
+                              )._count.posts
+                            }{" "}
+                            posts
                           </p>
                         )}
                       </div>
@@ -310,6 +379,18 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
 
                 <Separator className="my-8" />
 
+                {/* Social Share */}
+                <SocialShare url={articleUrl} title={post.title} />
+
+                {/* Related Posts */}
+                <RelatedPosts
+                  postId={post.id}
+                  tagIds={post.tags.map((t) => t.tagId)}
+                  authorId={post.author.id}
+                />
+
+                <Separator className="my-8" />
+
                 {/* Comments */}
                 <CommentSection
                   postId={post.id}
@@ -318,9 +399,16 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
               </article>
             </div>
 
-            {/* Sidebar: Table of contents */}
+            {/* Sidebar: TOC + Newsletter CTA */}
             <aside className="hidden xl:block w-56 shrink-0">
-              <TableOfContents content={post.content} />
+              <div className="sticky top-20 space-y-6">
+                <TableOfContents content={post.content} />
+                {/* <NewsletterSignup
+                  variant="sidebar"
+                  title="Enjoyed this?"
+                  description="Get more articles like this in your inbox every week."
+                /> */}
+              </div>
             </aside>
           </div>
         </div>

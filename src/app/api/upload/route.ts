@@ -1,7 +1,9 @@
 import { NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/session";
-import { writeFile, mkdir } from "fs/promises";
-import path from "path";
+import cloudinary from "@/lib/cloudinary";
+
+const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/gif", "image/webp", "image/svg+xml"];
+const MAX_SIZE = 5 * 1024 * 1024; // 5 MB
 
 export async function POST(request: Request) {
   try {
@@ -14,57 +16,39 @@ export async function POST(request: Request) {
     const file = formData.get("file") as File | null;
 
     if (!file) {
+      return NextResponse.json({ error: "No file provided" }, { status: 400 });
+    }
+
+    if (!ALLOWED_TYPES.includes(file.type)) {
       return NextResponse.json(
-        { error: "No file provided" },
+        { error: "Invalid file type. Only JPEG, PNG, GIF, WebP and SVG are allowed." },
         { status: 400 }
       );
     }
 
-    // Validate file type
-    const allowedTypes = [
-      "image/jpeg",
-      "image/png",
-      "image/gif",
-      "image/webp",
-      "image/svg+xml",
-    ];
-    if (!allowedTypes.includes(file.type)) {
-      return NextResponse.json(
-        { error: "Invalid file type. Only images are allowed." },
-        { status: 400 }
-      );
+    if (file.size > MAX_SIZE) {
+      return NextResponse.json({ error: "File size exceeds 5 MB limit." }, { status: 400 });
     }
 
-    // Validate file size (max 5MB)
-    const maxSize = 5 * 1024 * 1024;
-    if (file.size > maxSize) {
-      return NextResponse.json(
-        { error: "File size exceeds 5MB limit" },
-        { status: 400 }
-      );
-    }
-
+    // Convert file to base64 data URI for Cloudinary upload
     const bytes = await file.arrayBuffer();
     const buffer = Buffer.from(bytes);
+    const base64 = `data:${file.type};base64,${buffer.toString("base64")}`;
 
-    // Generate unique filename
-    const ext = path.extname(file.name) || ".png";
-    const filename = `${Date.now()}-${Math.random().toString(36).substring(2, 8)}${ext}`;
+    // Upload to Cloudinary
+    const result = await cloudinary.uploader.upload(base64, {
+      folder: "inspire-blog",
+      transformation: [
+        { quality: "auto", fetch_format: "auto" }, // auto WebP/AVIF + compression
+      ],
+    });
 
-    const uploadDir = path.join(process.cwd(), "public", "uploads");
-    await mkdir(uploadDir, { recursive: true });
-
-    const filePath = path.join(uploadDir, filename);
-    await writeFile(filePath, buffer);
-
-    const url = `/uploads/${filename}`;
-
-    return NextResponse.json({ url, filename }, { status: 201 });
-  } catch (error) {
-    console.error("Error uploading file:", error);
     return NextResponse.json(
-      { error: "Failed to upload file" },
-      { status: 500 }
+      { url: result.secure_url, filename: result.public_id },
+      { status: 201 }
     );
+  } catch (error) {
+    console.error("Upload error:", error);
+    return NextResponse.json({ error: "Failed to upload file." }, { status: 500 });
   }
 }

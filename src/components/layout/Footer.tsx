@@ -1,9 +1,9 @@
 import React from "react";
 import Link from "next/link";
-import Image from "next/image";
 import { Twitter, Github, Linkedin } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
+import Logo from "@/components/shared/Logo";
 
 const FOOTER_LINKS = {
   discover: [
@@ -52,15 +52,7 @@ const Footer: React.FC = () => {
         <div className="grid grid-cols-1 gap-8 py-12 sm:grid-cols-2 lg:grid-cols-4">
           {/* Brand column */}
           <div className="sm:col-span-2 lg:col-span-1">
-            <Link
-              href="/"
-              className="inline-flex items-center gap-1.5 hover:opacity-80 transition-opacity"
-            >
-              <Image src="/logo.png" alt="Inspire.blog" width={28} height={28} className="h-7 w-7 object-contain" />
-              <span className="text-[17px] font-semibold tracking-tight text-foreground">
-                Inspire<span className="text-muted-foreground font-normal">.blog</span>
-              </span>
-            </Link>
+            <Logo size="md" />
             <p className="mt-3 max-w-xs text-sm leading-relaxed text-muted-foreground">
               Where ideas ignite. Discover insightful articles on technology,
               programming, design, and more — or share your own.
@@ -72,7 +64,7 @@ const Footer: React.FC = () => {
                   key={label}
                   href={href}
                   target="_blank"
-                  rel="noopener noreferrer"
+                  rel="noopener noreferrer nofollow"
                   aria-label={label}
                 >
                   <Button
@@ -155,9 +147,15 @@ const Footer: React.FC = () => {
           <p className="text-xs text-muted-foreground">
             &copy; {new Date().getFullYear()} Inspire.blog. All rights reserved.
           </p>
-          <p className="text-xs text-muted-foreground">
-            Built with care by the Inspire.blog team
-          </p>
+          <div className="flex items-center gap-4 text-xs text-muted-foreground">
+            <span>Built with care by the Inspire.blog team</span>
+            <a
+              href="/contact"
+              className="underline underline-offset-2 hover:text-foreground transition-colors"
+            >
+              Advertise with us
+            </a>
+          </div>
         </div>
       </div>
     </footer>

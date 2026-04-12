@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useRef } from "react";
 import Link from "next/link";
-import Image from "next/image";
+import Logo from "@/components/shared/Logo";
 import { useRouter, usePathname } from "next/navigation";
 import { useSession, signOut } from "next-auth/react";
 import {
@@ -86,22 +86,7 @@ const Navbar: React.FC = () => {
       <nav className="mx-auto flex h-14 max-w-6xl items-center gap-3 px-4 sm:px-6">
 
         {/* Logo */}
-        <Link
-          href="/"
-          className="mr-2 flex shrink-0 items-center gap-1.5 transition-opacity hover:opacity-85"
-        >
-          <Image
-            src="/logo.png"
-            alt="Inspire.blog"
-            width={32}
-            height={32}
-            className="h-8 w-8 object-contain"
-            priority
-          />
-          <span className="text-[17px] font-semibold tracking-tight text-foreground">
-            Inspire<span className="text-muted-foreground font-normal">.blog</span>
-          </span>
-        </Link>
+        <Logo className="mr-2 shrink-0" size="md" />
 
         {/* Nav links — desktop */}
         <div className="hidden items-center gap-0.5 md:flex">

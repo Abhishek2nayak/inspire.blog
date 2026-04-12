@@ -1,10 +1,9 @@
 import type { Metadata } from "next";
-import { Inter, Lora } from "next/font/google";
+import { Inter, Lora, Playfair_Display } from "next/font/google";
 import AuthProvider from "@/components/shared/AuthProvider";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import Navbar from "@/components/layout/Navbar";
-import Footer from "@/components/layout/Footer";
+import ConditionalShell from "@/components/layout/ConditionalShell";
 import "./globals.css";
 
 const inter = Inter({
@@ -18,6 +17,14 @@ const lora = Lora({
   variable: "--font-lora",
   display: "swap",
 });
+
+const playfair = Playfair_Display({
+  subsets: ["latin"],
+  variable: "--font-playfair",
+  display: "swap",
+});
+
+const BASE_URL = process.env.NEXT_PUBLIC_APP_URL || "https://inspire-blog-five.vercel.app";
 
 export const metadata: Metadata = {
   title: {
@@ -53,7 +60,7 @@ export const metadata: Metadata = {
   openGraph: {
     type: "website",
     locale: "en_US",
-    url: "https://inspire.blog",
+    url: BASE_URL,
     siteName: "Inspire.blog",
     title: "Inspire.blog — Where Ideas Ignite",
     description:
@@ -99,24 +106,24 @@ const jsonLd = {
   "@context": "https://schema.org",
   "@type": "WebSite",
   name: "Inspire.blog",
-  url: "https://inspire.blog",
+  url: BASE_URL,
   description:
     "A modern publishing platform for curious minds. Discover and share articles on technology, programming, design, and more.",
   potentialAction: {
     "@type": "SearchAction",
     target: {
       "@type": "EntryPoint",
-      urlTemplate: "https://inspire.blog/search?q={search_term_string}",
+      urlTemplate: `${BASE_URL}/search?q={search_term_string}`,
     },
     "query-input": "required name=search_term_string",
   },
   publisher: {
     "@type": "Organization",
     name: "Inspire.blog",
-    url: "https://inspire.blog",
+    url: BASE_URL,
     logo: {
       "@type": "ImageObject",
-      url: "https://inspire.blog/logo.png",
+      url: `${BASE_URL}/logo.png`,
     },
   },
 };
@@ -129,8 +136,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${inter.variable} ${lora.variable}`}
-      suppressHydrationWarning
+      className={`${inter.variable} ${lora.variable} ${playfair.variable}`}
     >
       <head>
         <script
@@ -141,9 +147,7 @@ export default function RootLayout({
       <body className="font-sans antialiased bg-background text-foreground min-h-screen flex flex-col">
         <AuthProvider>
           <TooltipProvider delayDuration={300}>
-            <Navbar />
-            <main className="flex-1">{children}</main>
-            <Footer />
+            <ConditionalShell>{children}</ConditionalShell>
             <Toaster />
           </TooltipProvider>
         </AuthProvider>

@@ -5,29 +5,29 @@
   --radius: 0.5rem;
 
   /* ── Light mode — Hashnode-inspired: white + slate ── */
-  --color-background:         hsl(0 0% 100%);
-  --color-foreground:         hsl(222 47% 11%);
-  --color-card:               hsl(0 0% 100%);
-  --color-card-foreground:    hsl(222 47% 11%);
-  --color-popover:            hsl(0 0% 100%);
+  --color-background: hsl(0 0% 100%);
+  --color-foreground: hsl(222 47% 11%);
+  --color-card: hsl(0 0% 100%);
+  --color-card-foreground: hsl(222 47% 11%);
+  --color-popover: hsl(0 0% 100%);
   --color-popover-foreground: hsl(222 47% 11%);
-  --color-primary:            hsl(222 47% 11%);
+  --color-primary: hsl(222 47% 11%);
   --color-primary-foreground: hsl(0 0% 100%);
-  --color-secondary:          hsl(210 40% 96%);
+  --color-secondary: hsl(210 40% 96%);
   --color-secondary-foreground: hsl(222 47% 11%);
-  --color-muted:              hsl(210 40% 96%);
-  --color-muted-foreground:   hsl(215 16% 47%);
-  --color-accent:             hsl(210 40% 94%);
-  --color-accent-foreground:  hsl(222 47% 11%);
-  --color-destructive:        hsl(0 72% 51%);
+  --color-muted: hsl(210 40% 96%);
+  --color-muted-foreground: hsl(215 16% 47%);
+  --color-accent: hsl(210 40% 94%);
+  --color-accent-foreground: hsl(222 47% 11%);
+  --color-destructive: hsl(0 72% 51%);
   --color-destructive-foreground: hsl(0 0% 100%);
-  --color-border:             hsl(214 32% 91%);
-  --color-input:              hsl(214 32% 91%);
-  --color-ring:               hsl(217 91% 60%);
+  --color-border: hsl(214 32% 91%);
+  --color-input: hsl(214 32% 91%);
+  --color-ring: hsl(217 91% 60%);
 
   /* Blue accent for interactive highlights */
-  --color-blue:               hsl(217 91% 60%);
-  --color-blue-muted:         hsl(214 100% 97%);
+  --color-blue: hsl(217 91% 60%);
+  --color-blue-muted: hsl(214 100% 97%);
 
   --color-chart-1: hsl(220 70% 50%);
   --color-chart-2: hsl(160 60% 45%);
@@ -35,18 +35,19 @@
   --color-chart-4: hsl(280 65% 60%);
   --color-chart-5: hsl(340 75% 55%);
 
-  --color-sidebar:                  hsl(0 0% 99%);
-  --color-sidebar-foreground:       hsl(222 47% 11%);
-  --color-sidebar-primary:          hsl(222 47% 11%);
+  --color-sidebar: hsl(0 0% 99%);
+  --color-sidebar-foreground: hsl(222 47% 11%);
+  --color-sidebar-primary: hsl(222 47% 11%);
   --color-sidebar-primary-foreground: hsl(0 0% 100%);
-  --color-sidebar-accent:           hsl(210 40% 94%);
+  --color-sidebar-accent: hsl(210 40% 94%);
   --color-sidebar-accent-foreground: hsl(222 47% 11%);
-  --color-sidebar-border:           hsl(214 32% 91%);
-  --color-sidebar-ring:             hsl(217 91% 60%);
+  --color-sidebar-border: hsl(214 32% 91%);
+  --color-sidebar-ring: hsl(217 91% 60%);
 
-  --font-sans: var(--font-inter, 'Inter'), system-ui, -apple-system, sans-serif;
-  --font-serif: var(--font-lora, 'Georgia'), 'Cambria', serif;
-  --font-mono: 'SFMono-Regular', 'Menlo', 'Monaco', 'Consolas', monospace;
+  --font-sans: var(--font-inter, "Inter"), system-ui, -apple-system, sans-serif;
+  --font-serif: var(--font-lora, "Georgia"), "Cambria", serif;
+  --font-playfair: var(--font-playfair, "Playfair Display"), Georgia, serif;
+  --font-mono: "SFMono-Regular", "Menlo", "Monaco", "Consolas", monospace;
 }
 
 /* ── Base ── */
@@ -61,7 +62,9 @@ body {
   background-color: var(--color-background);
   color: var(--color-foreground);
   line-height: 1.7;
-  transition: background-color 0.2s ease, color 0.2s ease;
+  transition:
+    background-color 0.2s ease,
+    color 0.2s ease;
 }
 
 ::selection {
@@ -69,25 +72,40 @@ body {
   color: inherit;
 }
 
-*:focus-visible {
-  outline: 2px solid var(--color-ring);
-  outline-offset: 2px;
+/* ── Hide scrollbar utility ── */
+.no-scrollbar {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
 }
 
 /* ── Scrollbar ── */
-::-webkit-scrollbar { width: 5px; height: 5px; }
-::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
 ::-webkit-scrollbar-thumb {
   background: var(--color-border);
   border-radius: 99px;
 }
-::-webkit-scrollbar-thumb:hover { background: var(--color-muted-foreground); }
-* { scrollbar-width: thin; scrollbar-color: var(--color-border) transparent; }
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-muted-foreground);
+}
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-border) transparent;
+}
 
 /* ── Reading progress bar ── */
 .reading-progress {
   position: fixed;
-  top: 0; left: 0;
+  top: 0;
+  left: 0;
   height: 2px;
   background: var(--color-blue);
   z-index: 9999;
@@ -115,12 +133,24 @@ body {
   margin-bottom: 0.75rem;
 }
 
-.article-content h1 { font-size: 2rem; }
-.article-content h2 { font-size: 1.6rem; }
-.article-content h3 { font-size: 1.3rem; font-weight: 600; }
-.article-content h4 { font-size: 1.1rem; font-weight: 600; }
+.article-content h1 {
+  font-size: 2rem;
+}
+.article-content h2 {
+  font-size: 1.6rem;
+}
+.article-content h3 {
+  font-size: 1.3rem;
+  font-weight: 600;
+}
+.article-content h4 {
+  font-size: 1.1rem;
+  font-weight: 600;
+}
 
-.article-content p { margin-bottom: 1.6rem; }
+.article-content p {
+  margin-bottom: 1.6rem;
+}
 
 .article-content a {
   color: var(--color-blue);
@@ -128,7 +158,9 @@ body {
   text-underline-offset: 3px;
   text-decoration-thickness: 1px;
 }
-.article-content a:hover { opacity: 0.8; }
+.article-content a:hover {
+  opacity: 0.8;
+}
 
 .article-content blockquote {
   border-left: 3px solid var(--color-blue);
@@ -137,11 +169,23 @@ body {
   font-style: italic;
   color: var(--color-muted-foreground);
 }
-.article-content blockquote p { margin-bottom: 0; }
+.article-content blockquote p {
+  margin-bottom: 0;
+}
 
-.article-content ul { list-style-type: disc; padding-left: 1.75rem; margin-bottom: 1.5rem; }
-.article-content ol { list-style-type: decimal; padding-left: 1.75rem; margin-bottom: 1.5rem; }
-.article-content li { margin-bottom: 0.5rem; }
+.article-content ul {
+  list-style-type: disc;
+  padding-left: 1.75rem;
+  margin-bottom: 1.5rem;
+}
+.article-content ol {
+  list-style-type: decimal;
+  padding-left: 1.75rem;
+  margin-bottom: 1.5rem;
+}
+.article-content li {
+  margin-bottom: 0.5rem;
+}
 
 .article-content :not(pre) > code {
   background: var(--color-muted);
@@ -198,7 +242,9 @@ body {
   color: var(--color-foreground);
 }
 
-.ProseMirror > * + * { margin-top: 0.75em; }
+.ProseMirror > * + * {
+  margin-top: 0.75em;
+}
 
 .ProseMirror h1,
 .ProseMirror h2,
@@ -209,11 +255,25 @@ body {
   letter-spacing: -0.02em;
 }
 
-.ProseMirror h1 { font-size: 1.875rem; line-height: 1.25; margin-top: 2rem; }
-.ProseMirror h2 { font-size: 1.5rem;   line-height: 1.3;  margin-top: 1.75rem; }
-.ProseMirror h3 { font-size: 1.25rem;  line-height: 1.4;  margin-top: 1.5rem; }
+.ProseMirror h1 {
+  font-size: 1.875rem;
+  line-height: 1.25;
+  margin-top: 2rem;
+}
+.ProseMirror h2 {
+  font-size: 1.5rem;
+  line-height: 1.3;
+  margin-top: 1.75rem;
+}
+.ProseMirror h3 {
+  font-size: 1.25rem;
+  line-height: 1.4;
+  margin-top: 1.5rem;
+}
 
-.ProseMirror p { margin-bottom: 1rem; }
+.ProseMirror p {
+  margin-bottom: 1rem;
+}
 
 .ProseMirror blockquote {
   border-left: 3px solid var(--color-blue);
@@ -223,9 +283,19 @@ body {
   color: var(--color-muted-foreground);
 }
 
-.ProseMirror ul { list-style-type: disc; padding-left: 1.5rem; margin-bottom: 1rem; }
-.ProseMirror ol { list-style-type: decimal; padding-left: 1.5rem; margin-bottom: 1rem; }
-.ProseMirror li { margin-bottom: 0.35rem; }
+.ProseMirror ul {
+  list-style-type: disc;
+  padding-left: 1.5rem;
+  margin-bottom: 1rem;
+}
+.ProseMirror ol {
+  list-style-type: decimal;
+  padding-left: 1.5rem;
+  margin-bottom: 1rem;
+}
+.ProseMirror li {
+  margin-bottom: 0.35rem;
+}
 
 .ProseMirror pre {
   background: hsl(222 47% 5%);
@@ -240,7 +310,12 @@ body {
   border: 1px solid hsl(222 47% 13%);
 }
 
-.ProseMirror pre code { background: transparent; color: inherit; padding: 0; border: none; }
+.ProseMirror pre code {
+  background: transparent;
+  color: inherit;
+  padding: 0;
+  border: none;
+}
 
 .ProseMirror :not(pre) > code {
   background: var(--color-muted);
@@ -251,11 +326,25 @@ body {
   border: 1px solid var(--color-border);
 }
 
-.ProseMirror a { color: var(--color-blue); text-decoration: underline; text-underline-offset: 2px; }
+.ProseMirror a {
+  color: var(--color-blue);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
 
-.ProseMirror img { max-width: 100%; height: auto; border-radius: 0.5rem; margin: 1.5rem auto; display: block; }
+.ProseMirror img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 0.5rem;
+  margin: 1.5rem auto;
+  display: block;
+}
 
-.ProseMirror hr { border: none; border-top: 1px solid var(--color-border); margin: 2rem 0; }
+.ProseMirror hr {
+  border: none;
+  border-top: 1px solid var(--color-border);
+  margin: 2rem 0;
+}
 
 .ProseMirror p.is-editor-empty:first-child::before {
   color: var(--color-muted-foreground);
@@ -283,13 +372,25 @@ body {
   margin-bottom: 0.5rem;
   color: var(--color-foreground);
 }
-.markdown-preview h1 { font-size: 1.75rem; }
-.markdown-preview h2 { font-size: 1.375rem; }
-.markdown-preview h3 { font-size: 1.125rem; }
+.markdown-preview h1 {
+  font-size: 1.75rem;
+}
+.markdown-preview h2 {
+  font-size: 1.375rem;
+}
+.markdown-preview h3 {
+  font-size: 1.125rem;
+}
 
-.markdown-preview p { margin-bottom: 1.25rem; }
+.markdown-preview p {
+  margin-bottom: 1.25rem;
+}
 
-.markdown-preview a { color: var(--color-blue); text-decoration: underline; text-underline-offset: 3px; }
+.markdown-preview a {
+  color: var(--color-blue);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
 
 .markdown-preview blockquote {
   border-left: 3px solid var(--color-blue);
@@ -299,11 +400,24 @@ body {
   color: var(--color-muted-foreground);
 }
 
-.markdown-preview ul { list-style-type: disc; padding-left: 1.5rem; margin-bottom: 1rem; }
-.markdown-preview ol { list-style-type: decimal; padding-left: 1.5rem; margin-bottom: 1rem; }
-.markdown-preview li { margin-bottom: 0.35rem; }
+.markdown-preview ul {
+  list-style-type: disc;
+  padding-left: 1.5rem;
+  margin-bottom: 1rem;
+}
+.markdown-preview ol {
+  list-style-type: decimal;
+  padding-left: 1.5rem;
+  margin-bottom: 1rem;
+}
+.markdown-preview li {
+  margin-bottom: 0.35rem;
+}
 
-.markdown-preview code { font-family: var(--font-mono); font-size: 0.875em; }
+.markdown-preview code {
+  font-family: var(--font-mono);
+  font-size: 0.875em;
+}
 
 .markdown-preview :not(pre) > code {
   background: var(--color-muted);
@@ -325,13 +439,37 @@ body {
   border: 1px solid hsl(222 47% 13%);
 }
 
-.markdown-preview img { max-width: 100%; border-radius: 0.5rem; margin: 1.5rem auto; display: block; }
+.markdown-preview img {
+  max-width: 100%;
+  border-radius: 0.5rem;
+  margin: 1.5rem auto;
+  display: block;
+}
 
-.markdown-preview table { width: 100%; border-collapse: collapse; margin: 1.5rem 0; font-size: 0.9rem; }
+.markdown-preview table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1.5rem 0;
+  font-size: 0.9rem;
+}
 .markdown-preview th,
-.markdown-preview td { border: 1px solid var(--color-border); padding: 0.5rem 0.75rem; text-align: left; }
-.markdown-preview th { background: var(--color-muted); font-weight: 600; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em; }
-.markdown-preview hr { border: none; border-top: 1px solid var(--color-border); margin: 2rem 0; }
+.markdown-preview td {
+  border: 1px solid var(--color-border);
+  padding: 0.5rem 0.75rem;
+  text-align: left;
+}
+.markdown-preview th {
+  background: var(--color-muted);
+  font-weight: 600;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+.markdown-preview hr {
+  border: none;
+  border-top: 1px solid var(--color-border);
+  margin: 2rem 0;
+}
 
 /* ── Notion-like editor (notion-editor class) ── */
 .notion-editor .ProseMirror {
@@ -344,7 +482,9 @@ body {
   caret-color: var(--color-foreground);
 }
 
-.notion-editor .ProseMirror > * + * { margin-top: 0.35em; }
+.notion-editor .ProseMirror > * + * {
+  margin-top: 0.35em;
+}
 
 .notion-editor .ProseMirror h1,
 .notion-editor .ProseMirror h2,
@@ -357,11 +497,19 @@ body {
   margin-bottom: 0.1em;
 }
 
-.notion-editor .ProseMirror h1 { font-size: 1.875rem; }
-.notion-editor .ProseMirror h2 { font-size: 1.5rem; }
-.notion-editor .ProseMirror h3 { font-size: 1.25rem; }
+.notion-editor .ProseMirror h1 {
+  font-size: 1.875rem;
+}
+.notion-editor .ProseMirror h2 {
+  font-size: 1.5rem;
+}
+.notion-editor .ProseMirror h3 {
+  font-size: 1.25rem;
+}
 
-.notion-editor .ProseMirror p { margin-bottom: 0; }
+.notion-editor .ProseMirror p {
+  margin-bottom: 0;
+}
 
 .notion-editor .ProseMirror blockquote {
   border-left: 3px solid var(--color-border);
@@ -371,9 +519,19 @@ body {
   font-style: italic;
 }
 
-.notion-editor .ProseMirror ul { list-style-type: disc; padding-left: 1.5rem; margin: 0.25rem 0; }
-.notion-editor .ProseMirror ol { list-style-type: decimal; padding-left: 1.5rem; margin: 0.25rem 0; }
-.notion-editor .ProseMirror li { margin-bottom: 0.2rem; }
+.notion-editor .ProseMirror ul {
+  list-style-type: disc;
+  padding-left: 1.5rem;
+  margin: 0.25rem 0;
+}
+.notion-editor .ProseMirror ol {
+  list-style-type: decimal;
+  padding-left: 1.5rem;
+  margin: 0.25rem 0;
+}
+.notion-editor .ProseMirror li {
+  margin-bottom: 0.2rem;
+}
 
 .notion-editor .ProseMirror pre {
   background: hsl(222 47% 5%);
@@ -388,7 +546,12 @@ body {
   border: 1px solid hsl(222 47% 13%);
 }
 
-.notion-editor .ProseMirror pre code { background: transparent; color: inherit; padding: 0; border: none; }
+.notion-editor .ProseMirror pre code {
+  background: transparent;
+  color: inherit;
+  padding: 0;
+  border: none;
+}
 
 .notion-editor .ProseMirror :not(pre) > code {
   background: var(--color-muted);
@@ -400,11 +563,25 @@ body {
   color: var(--color-foreground);
 }
 
-.notion-editor .ProseMirror a { color: var(--color-blue); text-decoration: underline; text-underline-offset: 2px; }
+.notion-editor .ProseMirror a {
+  color: var(--color-blue);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
 
-.notion-editor .ProseMirror img { max-width: 100%; height: auto; border-radius: 0.5rem; margin: 1rem auto; display: block; }
+.notion-editor .ProseMirror img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 0.5rem;
+  margin: 1rem auto;
+  display: block;
+}
 
-.notion-editor .ProseMirror hr { border: none; border-top: 1px solid var(--color-border); margin: 1.5rem 0; }
+.notion-editor .ProseMirror hr {
+  border: none;
+  border-top: 1px solid var(--color-border);
+  margin: 1.5rem 0;
+}
 
 /* Placeholder styling */
 .notion-editor .ProseMirror p.is-empty:first-child::before,
@@ -428,12 +605,17 @@ body {
 
 /* ── Skeleton shimmer ── */
 @keyframes shimmer {
-  0%   { background-position: -200% 0; }
-  100% { background-position:  200% 0; }
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
 }
 
 .skeleton-shimmer {
-  background: linear-gradient(90deg,
+  background: linear-gradient(
+    90deg,
     var(--color-muted) 25%,
     var(--color-accent) 50%,
     var(--color-muted) 75%
@@ -459,14 +641,49 @@ body {
 }
 
 /* ── Highlight.js ── */
-.hljs { color: hsl(220 15% 85%); background: hsl(222 47% 5%); }
-.hljs-comment, .hljs-quote { color: hsl(220 10% 55%); font-style: italic; }
-.hljs-keyword, .hljs-formula { color: hsl(280 65% 75%); }
-.hljs-name, .hljs-deletion, .hljs-subst { color: hsl(0 65% 70%); }
-.hljs-literal { color: hsl(195 65% 70%); }
-.hljs-string, .hljs-regexp, .hljs-addition, .hljs-attribute { color: hsl(120 45% 70%); }
-.hljs-variable, .hljs-number, .hljs-type { color: hsl(30 85% 70%); }
-.hljs-symbol, .hljs-link, .hljs-title { color: hsl(210 75% 70%); }
-.hljs-built_in { color: hsl(50 85% 65%); }
-.hljs-emphasis { font-style: italic; }
-.hljs-strong { font-weight: bold; }
+.hljs {
+  color: hsl(220 15% 85%);
+  background: hsl(222 47% 5%);
+}
+.hljs-comment,
+.hljs-quote {
+  color: hsl(220 10% 55%);
+  font-style: italic;
+}
+.hljs-keyword,
+.hljs-formula {
+  color: hsl(280 65% 75%);
+}
+.hljs-name,
+.hljs-deletion,
+.hljs-subst {
+  color: hsl(0 65% 70%);
+}
+.hljs-literal {
+  color: hsl(195 65% 70%);
+}
+.hljs-string,
+.hljs-regexp,
+.hljs-addition,
+.hljs-attribute {
+  color: hsl(120 45% 70%);
+}
+.hljs-variable,
+.hljs-number,
+.hljs-type {
+  color: hsl(30 85% 70%);
+}
+.hljs-symbol,
+.hljs-link,
+.hljs-title {
+  color: hsl(210 75% 70%);
+}
+.hljs-built_in {
+  color: hsl(50 85% 65%);
+}
+.hljs-emphasis {
+  font-style: italic;
+}
+.hljs-strong {
+  font-weight: bold;
+}
