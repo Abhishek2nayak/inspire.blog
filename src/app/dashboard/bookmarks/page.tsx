@@ -4,7 +4,7 @@ import React, { useState, useEffect } from "react";
 import ArticleCard from "@/components/article/ArticleCard";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import type { PostWithAuthor } from "@/types";
 import Link from "next/link";
 import { Bookmark, BookOpen } from "lucide-react";
@@ -29,7 +29,6 @@ function ArticleSkeleton() {
 }
 
 export default function BookmarksPage() {
-  const { toast } = useToast();
   const [posts, setPosts] = useState<PostWithAuthor[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -44,11 +43,7 @@ export default function BookmarksPage() {
       const data = await res.json();
       setPosts(data.posts || data);
     } catch {
-      toast({
-        title: "Failed to load bookmarks",
-        description: "Please refresh the page.",
-        variant: "destructive",
-      });
+      toast.error("Failed to load bookmarks");
     } finally {
       setLoading(false);
     }
@@ -61,13 +56,9 @@ export default function BookmarksPage() {
       });
       if (!res.ok) throw new Error();
       setPosts((prev) => prev.filter((p) => p.id !== postId));
-      toast({ title: "Bookmark removed" });
+      toast("Bookmark removed");
     } catch {
-      toast({
-        title: "Failed to remove bookmark",
-        description: "Please try again.",
-        variant: "destructive",
-      });
+      toast.error("Failed to remove bookmark");
     }
   };
 

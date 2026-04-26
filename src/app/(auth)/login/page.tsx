@@ -4,11 +4,10 @@ import { useState } from "react";
 import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { useToast } from "@/hooks/use-toast";
 import { Loader2, Eye, EyeOff } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { toast } from "sonner";
 
-/* ── Clean input matching the screenshot ── */
 function AuthInput({
   id,
   label,
@@ -74,7 +73,6 @@ function GoogleIcon() {
 
 export default function LoginPage() {
   const router = useRouter();
-  const { toast } = useToast();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -84,24 +82,22 @@ export default function LoginPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email || !password) {
-      toast({ title: "Missing fields", description: "Please fill in all fields", variant: "destructive" });
+      toast.error("Please fill in all fields");
       return;
     }
     setLoading(true);
     try {
       const result = await signIn("credentials", { email, password, redirect: false });
+      console.log(result);
       if (result?.error) {
-        toast({
-          title: "Sign in failed",
-          description: result.error === "CredentialsSignin" ? "Invalid email or password" : result.error,
-          variant: "destructive",
-        });
+        console.log(result.error);
+        toast.error(result.error === "CredentialsSignin" ? "Invalid email or password" : result.error);
       } else {
         router.push("/feed");
         router.refresh();
       }
     } catch {
-      toast({ title: "Something went wrong", description: "Please try again later.", variant: "destructive" });
+      toast.error("Something went wrong. Please try again later.");
     } finally {
       setLoading(false);
     }

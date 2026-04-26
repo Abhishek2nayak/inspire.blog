@@ -4,8 +4,8 @@ import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { Heart, Bookmark, Share2, MessageCircle } from "lucide-react";
+import { toast } from "sonner";
 import { cn } from "@/lib/utils";
-import { useToast } from "@/hooks/use-toast";
 import {
   Tooltip,
   TooltipContent,
@@ -30,7 +30,6 @@ export default function ArticleActions({
 }: ArticleActionsProps) {
   const { data: session } = useSession();
   const router = useRouter();
-  const { toast } = useToast();
   const [likes, setLikes] = useState(initialLikes);
   const [liked, setLiked] = useState(initialLiked);
   const [bookmarked, setBookmarked] = useState(initialBookmarked);
@@ -58,7 +57,7 @@ export default function ArticleActions({
     } catch {
       setLiked(!newLiked);
       setLikes((prev) => (newLiked ? Math.max(0, prev - 1) : prev + 1));
-      toast({ title: "Failed to update like", variant: "destructive" });
+      toast.error("Failed to update like");
     }
   };
 
@@ -76,12 +75,10 @@ export default function ArticleActions({
         method: "POST",
       });
       if (!res.ok) throw new Error();
-      toast({
-        title: newBookmarked ? "Added to bookmarks" : "Removed from bookmarks",
-      });
+      toast(newBookmarked ? "Added to bookmarks" : "Removed from bookmarks");
     } catch {
       setBookmarked(!newBookmarked);
-      toast({ title: "Failed to update bookmark", variant: "destructive" });
+      toast.error("Failed to update bookmark");
     }
   };
 
@@ -92,7 +89,7 @@ export default function ArticleActions({
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch {
-      toast({ title: "Failed to copy link", variant: "destructive" });
+      toast.error("Failed to copy link");
     }
   };
 

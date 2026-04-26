@@ -1,8 +1,9 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -14,8 +15,7 @@ import {
   DialogDescription,
   DialogFooter,
 } from "@/components/ui/dialog";
-import { useToast } from "@/hooks/use-toast";
-import { formatDate } from "@/lib/utils";
+import { formatDate } from "@/lib/date-utils";
 import { cn } from "@/lib/utils";
 import {
   Edit,
@@ -51,7 +51,6 @@ const tabs: { key: PostStatus; label: string }[] = [
 
 export default function DashboardPostsPage() {
   const router = useRouter();
-  const { toast } = useToast();
   const [posts, setPosts] = useState<DashboardPost[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<PostStatus>("all");
@@ -69,11 +68,7 @@ export default function DashboardPostsPage() {
       const data = await res.json();
       setPosts(data.posts || data);
     } catch {
-      toast({
-        title: "Failed to load posts",
-        description: "Please refresh the page.",
-        variant: "destructive",
-      });
+      toast.error("Failed to load posts");
     } finally {
       setLoading(false);
     }
@@ -86,13 +81,9 @@ export default function DashboardPostsPage() {
       const res = await fetch(`/api/posts/${deleteId}`, { method: "DELETE" });
       if (!res.ok) throw new Error();
       setPosts((prev) => prev.filter((p) => p.id !== deleteId));
-      toast({ title: "Post deleted" });
+      toast("Post deleted");
     } catch {
-      toast({
-        title: "Failed to delete post",
-        description: "Please try again.",
-        variant: "destructive",
-      });
+      toast.error("Failed to delete post");
     } finally {
       setDeleting(false);
       setDeleteId(null);

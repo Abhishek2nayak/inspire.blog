@@ -3,7 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Clock, ArrowRight } from "lucide-react";
-import { getInitials, getExcerpt, formatDate } from "@/lib/utils";
+import { getInitials, getExcerpt, formatDate } from "@/lib/date-utils";
 
 interface RelatedPostsProps {
   postId: string;

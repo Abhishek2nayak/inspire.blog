@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/session";
-import { generateSlug, calculateReadTime, getExcerpt } from "@/lib/utils";
+import { generateSlug, calculateReadTime, getExcerpt } from "@/lib/date-utils";
+import { Post } from "@prisma/client";
 
 const postInclude = {
   author: {
@@ -17,7 +18,7 @@ const postInclude = {
 
 export async function GET(
   request: Request,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ id: string }> },
 ) {
   try {
     const { id } = await params;
@@ -42,14 +43,14 @@ export async function GET(
     console.error("Error fetching post:", error);
     return NextResponse.json(
       { error: "Failed to fetch post" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
 
 export async function PATCH(
   request: Request,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ id: string }> },
 ) {
   try {
     const user = await getCurrentUser();
@@ -79,9 +80,10 @@ export async function PATCH(
       metaTitle,
       metaDescription,
       canonicalUrl,
+      scheduled,
     } = body;
 
-    const updateData: Record<string, unknown> = {};
+    const updateData: Partial<Post> = {};
 
     if (title !== undefined) {
       updateData.title = title;
@@ -108,12 +110,23 @@ export async function PATCH(
       if (published && !existingPost.publishedAt) {
         updateData.publishedAt = new Date();
       }
+
+      // if the post is published and scheduled is null then set scheduled to null
+      // delete the scheduled post from the table
+      await prisma.scheduledPost.deleteMany({
+        where: { postId: id },
+      });
+
+      if (published && !scheduled) {
+        updateData.scheduledAt = null;
+      }
     }
 
     if (coverImage !== undefined) updateData.coverImage = coverImage;
     if (metaTitle !== undefined) updateData.metaTitle = metaTitle;
-    if (metaDescription !== undefined) updateData.metaDescription = metaDescription;
-    if (canonicalUrl !== undefined) updateData.canonicalUrl = canonicalUrl;
+    if (metaDescription !== undefined)
+      updateData.metaDesc = metaDescription;
+    if (canonicalUrl !== undefined) updateData.canonical = canonicalUrl;
 
     // Handle tags update
     if (tags !== undefined && Array.isArray(tags)) {
@@ -130,7 +143,7 @@ export async function PATCH(
               update: {},
               create: { name: tagName, slug: tagSlug },
             });
-          })
+          }),
         );
 
         await prisma.postTag.createMany({
@@ -150,14 +163,14 @@ export async function PATCH(
     console.error("Error updating post:", error);
     return NextResponse.json(
       { error: "Failed to update post" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
 
 export async function DELETE(
   request: Request,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ id: string }> },
 ) {
   try {
     const user = await getCurrentUser();
@@ -183,7 +196,7 @@ export async function DELETE(
     console.error("Error deleting post:", error);
     return NextResponse.json(
       { error: "Failed to delete post" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

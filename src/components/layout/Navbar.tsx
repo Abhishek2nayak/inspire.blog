@@ -18,7 +18,7 @@ import {
   Bookmark,
   ChevronDown,
 } from "lucide-react";
-import { cn, getInitials } from "@/lib/utils";
+import { cn } from "@/lib/utils";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -28,6 +28,7 @@ import {
   DropdownMenuItem,
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
+import { getInitials } from "@/lib/date-utils";
 
 const Navbar: React.FC = () => {
   const { data: session, status } = useSession();

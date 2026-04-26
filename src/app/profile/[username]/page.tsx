@@ -9,7 +9,7 @@ import { Separator } from "@/components/ui/separator";
 import ArticleCard from "@/components/article/ArticleCard";
 import FollowButton from "@/components/shared/FollowButton";
 import type { PostWithAuthor } from "@/types";
-import { formatDate, getInitials } from "@/lib/utils";
+import { formatDate, getInitials } from "@/lib/date-utils";
 import { Globe, Twitter, Github, CalendarDays, FileText, Users } from "lucide-react";
 
 interface ProfilePageProps {

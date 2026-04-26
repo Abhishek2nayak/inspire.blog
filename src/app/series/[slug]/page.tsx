@@ -3,7 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { BookOpen, Clock, ChevronRight } from "lucide-react";
 import { prisma } from "@/lib/prisma";
-import { getInitials, formatDate } from "@/lib/utils";
+import { getInitials, formatDate } from "@/lib/date-utils";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 

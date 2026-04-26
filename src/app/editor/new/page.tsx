@@ -3,14 +3,13 @@
 import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 import BlogEditor from "@/components/editor/BlogEditor";
-import { useToast } from "@/hooks/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
 
 export default function NewPostPage() {
   const { data: session, status } = useSession();
   const router = useRouter();
-  const { toast } = useToast();
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
@@ -28,9 +27,13 @@ export default function NewPostPage() {
     metaTitle: string;
     metaDesc: string;
     canonicalUrl: string;
+    scheduled?: {
+      publishAt: string;
+      timezone: string;
+    };
   }) => {
     if (!data.title.trim()) {
-      toast({ title: "Please add a title", variant: "destructive" });
+      toast.error("Please add a title");
       return;
     }
 
@@ -50,19 +53,28 @@ export default function NewPostPage() {
           metaTitle: data.metaTitle || undefined,
           metaDesc: data.metaDesc || undefined,
           canonicalUrl: data.canonicalUrl || undefined,
+          scheduled: data.scheduled,
         }),
       });
 
       const result = await res.json();
       if (!res.ok) {
-        toast({ title: result.error || "Failed to create post", variant: "destructive" });
+        toast.error(result.error || "Failed to create post");
         return;
       }
 
-      toast({ title: data.published ? "Published!" : "Draft saved!" });
-      router.push(`/article/${result.slug || result.id}`);
+      toast.success(data.published ? "Published!" : "Draft saved!");
+      /**
+       * if the scheduled post then just redirect to the editor page
+       * else redirect to the article page
+       */
+      if (data.scheduled) {
+        router.push(`/editor/${result.id}`);
+      } else {
+        router.push(`/article/${result.slug || result.id}`);
+      }
     } catch {
-      toast({ title: "Something went wrong", variant: "destructive" });
+      toast.error("Something went wrong");
     } finally {
       setSaving(false);
     }
@@ -89,7 +101,9 @@ export default function NewPostPage() {
             <span className="h-1.5 w-1.5 rounded-full bg-amber-500 animate-pulse" />
             New post
           </span>
-          <span className="text-xs text-amber-700">Drafts auto-save every 2 seconds</span>
+          <span className="text-xs text-amber-700">
+            Drafts auto-save every 2 seconds
+          </span>
         </div>
       </div>
       <div className="mx-auto max-w-3xl px-4 py-10 sm:px-6">

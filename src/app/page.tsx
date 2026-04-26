@@ -6,7 +6,7 @@ import { prisma } from "@/lib/prisma";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import type { PostWithAuthor } from "@/types";
-import { formatDate, getInitials, getExcerpt } from "@/lib/utils";
+import { formatDate, getInitials, getExcerpt } from "@/lib/date-utils";
 import {
   TrendingUp,
   Clock,

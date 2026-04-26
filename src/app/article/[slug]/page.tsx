@@ -5,7 +5,7 @@ import { cache } from "react";
 import type { Metadata } from "next";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/session";
-import { formatDate } from "@/lib/utils";
+import { formatDate } from "@/lib/date-utils";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
@@ -19,7 +19,7 @@ import FollowButton from "@/components/shared/FollowButton";
 import RelatedPosts from "@/components/article/RelatedPosts";
 import NewsletterSignup from "@/components/shared/NewsletterSignup";
 import SocialShare from "@/components/article/SocialShare";
-import { getInitials } from "@/lib/utils";
+import { getInitials } from "@/lib/date-utils";
 
 interface ArticlePageProps {
   params: Promise<{ slug: string }>;

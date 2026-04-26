@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/session";
-import { generateSlug, calculateReadTime, getExcerpt } from "@/lib/utils";
+import { generateSlug, calculateReadTime, getExcerpt } from "@/lib/date-utils";
 
 const postInclude = {
   author: {
@@ -87,7 +87,7 @@ export async function GET(request: Request) {
     console.error("Error fetching posts:", error);
     return NextResponse.json(
       { error: "Failed to fetch posts" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -105,17 +105,18 @@ export async function POST(request: Request) {
       subtitle,
       content,
       tags,
-      published,
       coverImage,
       metaTitle,
       metaDesc: metaDescription,
       canonical: canonicalUrl,
+      scheduled,
     } = body;
+    let published = body.published || false;
 
     if (!title || !content) {
       return NextResponse.json(
         { error: "Title and content are required" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -141,11 +142,34 @@ export async function POST(request: Request) {
             update: {},
             create: { name: tagName, slug: tagSlug },
           });
-        })
+        }),
       );
       tagConnections = tagRecords.map((t) => ({
         tag: { connect: { id: t.id } },
       }));
+    }
+
+    let scheduledAt = scheduled?.publishAt
+      ? new Date(scheduled.publishAt)
+      : null;
+    
+    console.log("Scheduled at", scheduledAt);
+
+    if (scheduledAt) {
+      if (scheduledAt < new Date()) {
+        return NextResponse.json(
+          { error: "Scheduled date is in the past" },
+          { status: 400 },
+        );
+      }
+
+      if (!scheduledAt.getTime()) {
+        return NextResponse.json(
+          { error: "Invalid scheduled date" },
+          { status: 400 },
+        );
+      }
+      published = false; // don't publish the post if it is scheduled
     }
 
     const post = await prisma.post.create({
@@ -155,13 +179,14 @@ export async function POST(request: Request) {
         content,
         excerpt,
         coverImage,
-        published: published || false,
+        published,
         metaTitle,
         metaDesc: metaDescription,
         canonical: canonicalUrl,
         readTime,
         publishedAt: published ? new Date() : null,
         authorId: user.id,
+        scheduledAt,
         tags: {
           create: tagConnections,
         },
@@ -169,12 +194,28 @@ export async function POST(request: Request) {
       include: postInclude,
     });
 
+    if (scheduledAt) {
+      if (!post.id) {
+        return NextResponse.json(
+          { error: "Failed to create post" },
+          { status: 500 },
+        );
+      }
+
+      const res = await prisma.scheduledPost.create({
+        data: {
+          postId: post.id,
+        },
+      });
+      console.log("Scheduled post created:", res);
+    }
+
     return NextResponse.json(post, { status: 201 });
   } catch (error) {
     console.error("Error creating post:", error);
     return NextResponse.json(
       { error: "Failed to create post" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

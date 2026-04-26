@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { Inter, Lora, Playfair_Display } from "next/font/google";
 import AuthProvider from "@/components/shared/AuthProvider";
-import { Toaster } from "@/components/ui/toaster";
+import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import ConditionalShell from "@/components/layout/ConditionalShell";
 import "./globals.css";

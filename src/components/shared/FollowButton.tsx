@@ -3,7 +3,7 @@
 import React, { useState } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Loader2, UserCheck, UserPlus } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -21,7 +21,6 @@ const FollowButton: React.FC<FollowButtonProps> = ({
 }) => {
   const { data: session } = useSession();
   const router = useRouter();
-  const { toast } = useToast();
   const [following, setFollowing] = useState(initialFollowing);
   const [loading, setLoading] = useState(false);
 
@@ -40,19 +39,14 @@ const FollowButton: React.FC<FollowButtonProps> = ({
         method: "POST",
       });
       if (!res.ok) throw new Error();
-      toast({
-        title: newFollowing ? "Following" : "Unfollowed",
-        description: newFollowing
-          ? "You'll see their posts in your feed."
-          : "Removed from your following list.",
-      });
+      if (newFollowing) {
+        toast.success("Following", { description: "You'll see their posts in your feed." });
+      } else {
+        toast("Unfollowed", { description: "Removed from your following list." });
+      }
     } catch {
       setFollowing(!newFollowing);
-      toast({
-        title: "Something went wrong",
-        description: "Please try again.",
-        variant: "destructive",
-      });
+      toast.error("Something went wrong. Please try again.");
     } finally {
       setLoading(false);
     }

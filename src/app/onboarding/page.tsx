@@ -3,8 +3,8 @@
 import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { useToast } from "@/hooks/use-toast";
 import { INTERESTS } from "@/types";
 import { Check, Loader2, ArrowRight } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -14,7 +14,6 @@ type Step = 1 | 2 | 3;
 export default function OnboardingPage() {
   const { data: session, status } = useSession();
   const router = useRouter();
-  const { toast } = useToast();
   const [step, setStep] = useState<Step>(1);
   const [selectedInterests, setSelectedInterests] = useState<string[]>([]);
   const [submitting, setSubmitting] = useState(false);
@@ -37,11 +36,7 @@ export default function OnboardingPage() {
       setStep(2);
     } else if (step === 2) {
       if (selectedInterests.length < 3) {
-        toast({
-          title: "Pick at least 3 interests",
-          description: "This helps us personalize your feed.",
-          variant: "destructive",
-        });
+        toast.error("Pick at least 3 interests");
         return;
       }
       handleSubmit();
@@ -66,11 +61,7 @@ export default function OnboardingPage() {
         router.push("/feed");
       }, 2800);
     } catch {
-      toast({
-        title: "Something went wrong",
-        description: "Please try again.",
-        variant: "destructive",
-      });
+      toast.error("Something went wrong. Please try again.");
     } finally {
       setSubmitting(false);
     }

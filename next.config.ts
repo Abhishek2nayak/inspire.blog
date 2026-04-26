@@ -8,6 +8,7 @@ const nextConfig: NextConfig = {
     ],
   },
   serverExternalPackages: ["@prisma/client", "firebase-admin", "cloudinary"],
+ 
 };
 
 export default nextConfig;

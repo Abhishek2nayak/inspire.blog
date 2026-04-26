@@ -3,11 +3,12 @@
 import React, { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { Bell, Check, Heart, MessageCircle, UserPlus } from "lucide-react";
-import { formatDate, getInitials, cn } from "@/lib/utils";
+import { toast } from "sonner";
+import { formatDate, getInitials } from "@/lib/date-utils";
+import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useToast } from "@/hooks/use-toast";
 
 interface Notification {
   id: string;
@@ -119,7 +120,6 @@ export default function NotificationsPage() {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(true);
   const [markingRead, setMarkingRead] = useState(false);
-  const { toast } = useToast();
 
   const fetchNotifications = useCallback(async () => {
     setLoading(true);
@@ -129,15 +129,11 @@ export default function NotificationsPage() {
       const data = await res.json();
       setNotifications(data.notifications || data || []);
     } catch {
-      toast({
-        title: "Error",
-        description: "Failed to load notifications",
-        variant: "destructive",
-      });
+      toast.error("Failed to load notifications");
     } finally {
       setLoading(false);
     }
-  }, [toast]);
+  }, []);
 
   useEffect(() => {
     fetchNotifications();
@@ -151,13 +147,9 @@ export default function NotificationsPage() {
       setNotifications((prev) =>
         prev.map((n) => ({ ...n, read: true }))
       );
-      toast({ title: "All notifications marked as read" });
+      toast.success("All notifications marked as read");
     } catch {
-      toast({
-        title: "Error",
-        description: "Failed to mark notifications as read",
-        variant: "destructive",
-      });
+      toast.error("Failed to mark notifications as read");
     } finally {
       setMarkingRead(false);
     }

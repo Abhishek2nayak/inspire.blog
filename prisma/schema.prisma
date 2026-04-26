@@ -22,17 +22,17 @@ model User {
   onboarded     Boolean   @default(false)
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
-
+  timezone      String?
   accounts             Account[]
   sessions             Session[]
   posts                Post[]
   comments             Comment[]
   likes                Like[]
   bookmarks            Bookmark[]
-  followers            Follow[]             @relation("following")
-  following            Follow[]             @relation("follower")
-  notifications        Notification[]       @relation("notificationRecipient")
-  notificationsTrigger Notification[]       @relation("notificationActor")
+  followers            Follow[]       @relation("following")
+  following            Follow[]       @relation("follower")
+  notifications        Notification[] @relation("notificationRecipient")
+  notificationsTrigger Notification[] @relation("notificationActor")
   interests            UserInterest[]
   series               Series[]
   reactions            Reaction[]
@@ -96,14 +96,15 @@ model Post {
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
 
-  author      User          @relation(fields: [authorId], references: [id], onDelete: Cascade)
-  tags        PostTag[]
-  comments    Comment[]
-  likes       Like[]
-  bookmarks   Bookmark[]
-  reactions   Reaction[]
-  readingList ReadingList[]
-  series      Series?       @relation(fields: [seriesId], references: [id])
+  author         User            @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  tags           PostTag[]
+  comments       Comment[]
+  likes          Like[]
+  bookmarks      Bookmark[]
+  reactions      Reaction[]
+  readingList    ReadingList[]
+  series         Series?         @relation(fields: [seriesId], references: [id])
+  scheduledPosts ScheduledPost[]
 }
 
 model Series {
@@ -243,4 +244,10 @@ model Notification {
 
   recipient User @relation("notificationRecipient", fields: [recipientId], references: [id], onDelete: Cascade)
   actor     User @relation("notificationActor", fields: [actorId], references: [id], onDelete: Cascade)
+}
+
+model ScheduledPost {
+  id     String @id @default(cuid())
+  postId String
+  post   Post   @relation(fields: [postId], references: [id])
 }

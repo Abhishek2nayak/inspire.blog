@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -11,8 +12,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
-import { useToast } from "@/hooks/use-toast";
-import { getInitials } from "@/lib/utils";
+import { getInitials } from "@/lib/date-utils";
 import {
   User,
   Lock,
@@ -45,7 +45,6 @@ interface PasswordData {
 export default function SettingsPage() {
   const { data: session, status } = useSession();
   const router = useRouter();
-  const { toast } = useToast();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [savingPassword, setSavingPassword] = useState(false);
@@ -92,11 +91,7 @@ export default function SettingsPage() {
         location: data.location || "",
       });
     } catch {
-      toast({
-        title: "Failed to load profile",
-        description: "Please refresh the page.",
-        variant: "destructive",
-      });
+      toast.error("Failed to load profile");
     } finally {
       setLoading(false);
     }
@@ -122,13 +117,9 @@ export default function SettingsPage() {
         body: JSON.stringify(form),
       });
       if (!res.ok) throw new Error();
-      toast({ title: "Profile updated", description: "Your changes have been saved." });
+      toast.success("Profile updated", { description: "Your changes have been saved." });
     } catch {
-      toast({
-        title: "Failed to save profile",
-        description: "Please try again.",
-        variant: "destructive",
-      });
+      toast.error("Failed to save profile");
     } finally {
       setSaving(false);
     }
@@ -137,19 +128,11 @@ export default function SettingsPage() {
   const handlePasswordSave = async (e: React.FormEvent) => {
     e.preventDefault();
     if (passwords.newPassword !== passwords.confirmPassword) {
-      toast({
-        title: "Passwords don't match",
-        description: "New password and confirmation must match.",
-        variant: "destructive",
-      });
+      toast.error("Passwords don't match");
       return;
     }
     if (passwords.newPassword.length < 6) {
-      toast({
-        title: "Password too short",
-        description: "Password must be at least 6 characters.",
-        variant: "destructive",
-      });
+      toast.error("Password must be at least 6 characters");
       return;
     }
     setSavingPassword(true);
@@ -160,14 +143,10 @@ export default function SettingsPage() {
         body: JSON.stringify(passwords),
       });
       if (!res.ok) throw new Error();
-      toast({ title: "Password updated" });
+      toast.success("Password updated");
       setPasswords({ currentPassword: "", newPassword: "", confirmPassword: "" });
     } catch {
-      toast({
-        title: "Failed to update password",
-        description: "Please check your current password.",
-        variant: "destructive",
-      });
+      toast.error("Failed to update password");
     } finally {
       setSavingPassword(false);
     }
@@ -541,7 +520,7 @@ export default function SettingsPage() {
               <Button
                 className="bg-foreground text-background hover:opacity-90 px-8"
                 onClick={() =>
-                  toast({ title: "Notification preferences saved" })
+                  toast.success("Notification preferences saved")
                 }
               >
                 Save Preferences

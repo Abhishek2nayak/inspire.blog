@@ -3,11 +3,11 @@
 import React, { useState } from "react";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
+import { toast } from "sonner";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useToast } from "@/hooks/use-toast";
-import { formatDate, getInitials } from "@/lib/utils";
+import { formatDate, getInitials } from "@/lib/date-utils";
 import type { CommentWithAuthor } from "@/types";
 import { Trash2, CornerDownRight } from "lucide-react";
 
@@ -21,7 +21,6 @@ export default function CommentSection({
   initialComments,
 }: CommentSectionProps) {
   const { data: session } = useSession();
-  const { toast } = useToast();
   const [comments, setComments] = useState<CommentWithAuthor[]>(initialComments);
   const [content, setContent] = useState("");
   const [replyingTo, setReplyingTo] = useState<string | null>(null);
@@ -67,9 +66,9 @@ export default function CommentSection({
         setContent("");
       }
 
-      toast({ title: "Comment posted" });
+      toast.success("Comment posted");
     } catch {
-      toast({ title: "Failed to post comment", variant: "destructive" });
+      toast.error("Failed to post comment");
     } finally {
       setSubmitting(false);
     }
@@ -98,9 +97,9 @@ export default function CommentSection({
       } else {
         setComments((prev) => prev.filter((c) => c.id !== commentId));
       }
-      toast({ title: "Comment deleted" });
+      toast.success("Comment deleted");
     } catch {
-      toast({ title: "Failed to delete comment", variant: "destructive" });
+      toast.error("Failed to delete comment");
     } finally {
       setDeleting(null);
     }

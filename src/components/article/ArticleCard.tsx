@@ -2,7 +2,8 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
-import { cn, formatDate, getExcerpt, getInitials } from "@/lib/utils";
+import { cn } from "@/lib/utils";
+import { formatDate, getExcerpt, getInitials } from "@/lib/date-utils";
 import type { PostWithAuthor } from "@/types";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";

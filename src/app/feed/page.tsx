@@ -9,7 +9,7 @@ import ArticleCard from "@/components/article/ArticleCard";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { cn, getInitials } from "@/lib/utils";
+import { cn } from "@/lib/utils";
 import type { PostWithAuthor } from "@/types";
 import {
   Home,
@@ -27,6 +27,7 @@ import {
   Bookmark,
   MoreHorizontal,
 } from "lucide-react";
+import { getInitials } from "@/lib/date-utils";
 
 /* ─── Types ─────────────────────────────────────────────────────────────── */
 type Tab = "for-you" | "following" | "latest" | "trending";

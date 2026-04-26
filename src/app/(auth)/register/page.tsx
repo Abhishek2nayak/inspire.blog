@@ -4,7 +4,7 @@ import { useState } from "react";
 import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { Loader2, Eye, EyeOff, Check } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -107,7 +107,6 @@ function GoogleIcon() {
 
 export default function RegisterPage() {
   const router = useRouter();
-  const { toast } = useToast();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -118,11 +117,11 @@ export default function RegisterPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!name || !email || !password) {
-      toast({ title: "Missing fields", description: "Please fill in all fields", variant: "destructive" });
+      toast.error("Please fill in all fields");
       return;
     }
     if (password.length < 6) {
-      toast({ title: "Password too short", description: "At least 6 characters required", variant: "destructive" });
+      toast.error("At least 6 characters required");
       return;
     }
     setLoading(true);
@@ -134,7 +133,7 @@ export default function RegisterPage() {
       });
       const data = await res.json();
       if (!res.ok) {
-        toast({ title: "Registration failed", description: data.error || "Something went wrong", variant: "destructive" });
+        toast.error(data.error || "Something went wrong");
         return;
       }
       const result = await signIn("credentials", { email, password, redirect: false });
@@ -145,7 +144,7 @@ export default function RegisterPage() {
         router.refresh();
       }
     } catch {
-      toast({ title: "Something went wrong", description: "Please try again later.", variant: "destructive" });
+      toast.error("Something went wrong. Please try again later.");
     } finally {
       setLoading(false);
     }

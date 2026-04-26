@@ -1,8 +1,8 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import { toast } from "sonner";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useToast } from "@/hooks/use-toast";
 import { Eye, Heart, MessageCircle, FileText, BarChart2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -20,7 +20,6 @@ interface PostStat {
 }
 
 export default function AnalyticsPage() {
-  const { toast } = useToast();
   const [posts, setPosts] = useState<PostStat[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -35,11 +34,7 @@ export default function AnalyticsPage() {
       const data = await res.json();
       setPosts(data.posts || data);
     } catch {
-      toast({
-        title: "Failed to load analytics",
-        description: "Please refresh the page.",
-        variant: "destructive",
-      });
+      toast.error("Failed to load analytics");
     } finally {
       setLoading(false);
     }

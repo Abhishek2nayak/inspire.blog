@@ -8,7 +8,7 @@ import { cn } from "@/lib/utils";
 import { FileText, Bookmark, BarChart2, LayoutDashboard, Loader2 } from "lucide-react";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
-import { getInitials } from "@/lib/utils";
+import { getInitials } from "@/lib/date-utils";
 
 const navItems = [
   { href: "/dashboard/posts", label: "Posts", icon: FileText },
