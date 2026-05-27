@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
+import Script from "next/script";
 import { cache } from "react";
 import type { Metadata } from "next";
 import { prisma } from "@/lib/prisma";
@@ -81,35 +82,48 @@ export async function generateMetadata({
   const post = await getPost(slug);
 
   if (!post) {
-    return { title: "Article Not Found" };
+    return { title: "Article Not Found | Inspire Blog" };
   }
 
-  const title = post.metaTitle || post.title;
-  const description =
+  const baseUrl = "https://inspireblog.mythosh.com";
+  const articleTitle = post.metaTitle || post.title;
+  const title = `${articleTitle} | Inspire Blog`;
+  const rawDescription =
     post.excerpt ||
     `Read "${post.title}" by ${post.author.name} on Inspire.blog`;
-  const images = post.coverImage ? [post.coverImage] : ["/og-image.png"];
+  const description = rawDescription.slice(0, 155);
+  const canonicalUrl = `${baseUrl}/article/${slug}`;
+  const ogImage = post.coverImage
+    ? post.coverImage.startsWith("http")
+      ? post.coverImage
+      : `${baseUrl}${post.coverImage}`
+    : `${baseUrl}/og-image.png`;
 
   return {
     title,
     description,
     alternates: {
-      canonical: `/article/${slug}`,
+      canonical: canonicalUrl,
+    },
+    robots: {
+      index: true,
+      follow: true,
     },
     openGraph: {
-      title,
+      title: articleTitle,
       description,
+      url: canonicalUrl,
       type: "article",
       publishedTime: post.createdAt.toISOString(),
       modifiedTime: post.updatedAt.toISOString(),
       authors: [post.author.name || ""],
-      images,
+      images: [{ url: ogImage, alt: articleTitle }],
     },
     twitter: {
       card: "summary_large_image",
-      title,
+      title: articleTitle,
       description,
-      images,
+      images: [ogImage],
     },
   };
 }
@@ -173,7 +187,7 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
   const authorInitials = getInitials(post.author.name || "U");
 
   const baseUrl =
-    process.env.NEXT_PUBLIC_APP_URL || "https://inspire-blog-five.vercel.app";
+    process.env.NEXT_PUBLIC_APP_URL || "https://inspireblog.mythosh.com";
   const articleUrl = `${baseUrl}/article/${post.slug}`;
 
   const jsonLd = {
@@ -181,8 +195,13 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
     "@type": "Article",
     headline: post.metaTitle || post.title,
     description: post.excerpt || "",
-    image: post.coverImage || undefined,
+    image: post.coverImage
+      ? post.coverImage.startsWith("http")
+        ? post.coverImage
+        : `${baseUrl}${post.coverImage}`
+      : `${baseUrl}/og-image.png`,
     url: articleUrl,
+    mainEntityOfPage: articleUrl,
     datePublished: post.createdAt.toISOString(),
     dateModified: post.updatedAt.toISOString(),
     author: {
@@ -192,16 +211,63 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
     },
     publisher: {
       "@type": "Organization",
-      name: "Inspire.blog",
-      url: baseUrl,
+      name: "Inspire Blog",
+      logo: {
+        "@type": "ImageObject",
+        url: `${baseUrl}/og-image.png`,
+      },
     },
+  };
+
+  const breadcrumbList = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      {
+        "@type": "ListItem",
+        position: 1,
+        name: "Home",
+        item: baseUrl,
+      },
+      ...(post.tags.length > 0
+        ? [
+            {
+              "@type": "ListItem",
+              position: 2,
+              name: post.tags[0].tag.name,
+              item: `${baseUrl}/tag/${post.tags[0].tag.slug}`,
+            },
+            {
+              "@type": "ListItem",
+              position: 3,
+              name: post.metaTitle || post.title,
+              item: articleUrl,
+            },
+          ]
+        : [
+            {
+              "@type": "ListItem",
+              position: 2,
+              name: post.metaTitle || post.title,
+              item: articleUrl,
+            },
+          ]),
+    ],
   };
 
   return (
     <>
-      <script
+      <Script
+        id="article-schema"
         type="application/ld+json"
+        strategy="beforeInteractive"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
+      <Script
+        id="breadcrumb-schema"
+        type="application/ld+json"
+        strategy="beforeInteractive"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbList) }}
       />
       <ReadingProgressBar />
 
