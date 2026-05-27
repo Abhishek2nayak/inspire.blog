@@ -260,13 +260,11 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
       <Script
         id="article-schema"
         type="application/ld+json"
-        strategy="beforeInteractive"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
       <Script
         id="breadcrumb-schema"
         type="application/ld+json"
-        strategy="beforeInteractive"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbList) }}
       />
       <ReadingProgressBar />
