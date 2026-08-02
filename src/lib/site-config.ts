@@ -10,8 +10,17 @@ export const siteConfig = {
   description:
     "Copy-paste AI prompts for Instagram posts, YouTube thumbnails, reels and banners — plus honest reviews of the tools that make them.",
 
-  /** Public origin, no trailing slash. */
-  url: (process.env.NEXT_PUBLIC_APP_URL || "https://inspireblog.mythosh.com").replace(/\/$/, ""),
+  /**
+   * Public origin, no trailing slash.
+   *
+   * The fallback is the live domain, NOT a placeholder. Everything
+   * SEO-critical derives from this — canonical tags, og:url, the sitemap,
+   * robots.txt and the RSS feed — so if NEXT_PUBLIC_APP_URL is ever missing
+   * on a deploy, the wrong value here silently tells Google the canonical
+   * version of every page lives somewhere else. That is what happened when
+   * this still defaulted to the pre-rebrand domain.
+   */
+  url: (process.env.NEXT_PUBLIC_APP_URL || "https://makeframe.online").replace(/\/$/, ""),
 
   locale: "en_US",
   lang: "en-US",
@@ -41,7 +50,28 @@ export const siteConfig = {
   paidPromptsEnabled: process.env.NEXT_PUBLIC_PAID_PROMPTS === "true",
 
   contactPath: "/contact",
-  googleSiteVerification: "nxkzM0PDGBbgXmWRyanSikl_1qlUeK6JbI2eTOUgGfU",
+
+  /**
+   * Contact addresses shown on /contact, /terms and /privacy.
+   *
+   * Still on the pre-rebrand domain deliberately — these mailboxes may be
+   * live, and pointing legal/privacy mail at an address that doesn't exist
+   * yet would silently lose messages. Change them here once the
+   * makeframe.online mailboxes are set up; it's a one-file edit.
+   */
+  emails: {
+    general: "hello@mythosh.com",
+    legal: "legal@mythosh.com",
+    privacy: "privacy@mythosh.com",
+  },
+  /**
+   * Search Console verification token. Tokens are issued PER PROPERTY, so the
+   * one from the pre-rebrand domain does not verify this one — get a fresh
+   * token from Search Console for makeframe.online and set it in the env.
+   * Empty means no meta tag is emitted at all, which is better than a stale
+   * token that silently never verifies.
+   */
+  googleSiteVerification: process.env.NEXT_PUBLIC_GOOGLE_VERIFICATION || "",
   foundingYear: "2026",
 
   keywords: [

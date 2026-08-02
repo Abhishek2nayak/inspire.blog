@@ -1,4 +1,5 @@
 import { Metadata } from "next";
+import { siteConfig } from "@/lib/site-config";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -48,10 +49,10 @@ export default function ContactPage() {
                     For general inquiries and support.
                   </p>
                   <a
-                    href="mailto:hello@mythosh.com"
+                    href={`mailto:${siteConfig.emails.general}`}
                     className="text-primary hover:underline mt-1 inline-block"
                   >
-                    hello@mythosh.com
+                    {siteConfig.emails.general}
                   </a>
                 </div>
               </div>

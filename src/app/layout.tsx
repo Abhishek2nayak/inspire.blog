@@ -41,9 +41,11 @@ export const metadata: Metadata = {
   metadataBase: new URL(siteConfig.url),
   applicationName: siteConfig.name,
 
-  verification: {
-    google: siteConfig.googleSiteVerification,
-  },
+  // Omit the block entirely when unset — an empty content="" meta tag is
+  // worse than none.
+  ...(siteConfig.googleSiteVerification
+    ? { verification: { google: siteConfig.googleSiteVerification } }
+    : {}),
 
   alternates: {
     canonical: siteConfig.url,

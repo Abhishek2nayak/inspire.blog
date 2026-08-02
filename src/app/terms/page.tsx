@@ -1,4 +1,5 @@
 import { Metadata } from "next";
+import { siteConfig } from "@/lib/site-config";
 import Link from "next/link";
 
 export const metadata: Metadata = {
@@ -168,10 +169,10 @@ export default function TermsOfServicePage() {
               <li>
                 By email:{" "}
                 <a
-                  href="mailto:legal@mythosh.com"
+                  href={`mailto:${siteConfig.emails.legal}`}
                   className="text-primary hover:underline"
                 >
-                  legal@mythosh.com
+                  {siteConfig.emails.legal}
                 </a>
               </li>
               <li>

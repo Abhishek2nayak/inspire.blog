@@ -1,4 +1,5 @@
 import { Metadata } from "next";
+import { siteConfig } from "@/lib/site-config";
 import Link from "next/link";
 
 export const metadata: Metadata = {
@@ -89,7 +90,7 @@ export default function PrivacyPolicyPage() {
               <li><strong className="text-foreground">The right to withdraw consent:</strong> You also have the right to withdraw your consent at any time where we relied on your consent to process your personal information.</li>
             </ul>
             <p className="mt-4">
-              To exercise any of these rights, please contact us at <a href="mailto:privacy@mythosh.com" className="text-primary hover:underline">privacy@mythosh.com</a>.
+              To exercise any of these rights, please contact us at <a href={`mailto:${siteConfig.emails.privacy}`} className="text-primary hover:underline">{siteConfig.emails.privacy}</a>.
             </p>
           </section>
 
@@ -127,7 +128,7 @@ export default function PrivacyPolicyPage() {
               If you have any questions about this Privacy Policy or wish to exercise your data protection rights, please contact us:
             </p>
             <ul className="list-disc pl-6 mt-4 space-y-2">
-              <li>By email: <a href="mailto:privacy@mythosh.com" className="text-primary hover:underline">privacy@mythosh.com</a></li>
+              <li>By email: <a href={`mailto:${siteConfig.emails.privacy}`} className="text-primary hover:underline">{siteConfig.emails.privacy}</a></li>
               <li>By visiting the <Link href="/about" className="text-primary hover:underline">About page</Link> on our website.</li>
             </ul>
           </section>
