@@ -3,6 +3,14 @@ import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { CLUSTERS, chipClass } from "@/lib/categories";
 import { absoluteUrl } from "@/lib/site-config";
+import { safeQuery } from "@/lib/safe-query";
+
+/**
+ * Rendered on demand and revalidated, never prerendered against the database
+ * at build time. A deploy must not fail because the database is empty,
+ * unmigrated or asleep — that is what broke the first production build.
+ */
+export const revalidate = 3600;
 
 export const metadata: Metadata = {
   title: "Topics",
@@ -14,12 +22,17 @@ export const metadata: Metadata = {
 export default async function CategoriesPage() {
   // Counts come from the DB; the card list comes from CLUSTERS so the page
   // renders correctly even before a category row has any content.
-  const categories = await prisma.category.findMany({
-    select: {
-      slug: true,
-      _count: { select: { prompts: true, tools: true, articles: true } },
-    },
-  });
+  // CLUSTERS drives the cards, so an empty result still renders a full page.
+  const categories = await safeQuery(
+    () =>
+      prisma.category.findMany({
+        select: {
+          slug: true,
+          _count: { select: { prompts: true, tools: true, articles: true } },
+        },
+      }),
+    []
+  );
   const counts = new Map(categories.map((c) => [c.slug, c._count]));
 
   return (

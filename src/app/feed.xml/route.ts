@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { siteConfig, absoluteUrl } from "@/lib/site-config";
+import { safeQuery } from "@/lib/safe-query";
 
 /** Escape for XML text/attribute content. */
 function esc(s: string): string {
@@ -19,25 +20,26 @@ function esc(s: string): string {
  * that followed it got a 404.
  */
 export async function GET() {
+  // An RSS route that 500s is worse than one that is briefly empty.
   const [prompts, tools, articles] = await Promise.all([
-    prisma.prompt.findMany({
+    safeQuery(() => prisma.prompt.findMany({
       where: { status: "PUBLISHED" },
       select: { slug: true, title: true, description: true, publishedAt: true },
       orderBy: { publishedAt: "desc" },
       take: 20,
-    }),
-    prisma.tool.findMany({
+    }), []),
+    safeQuery(() => prisma.tool.findMany({
       where: { status: "PUBLISHED" },
       select: { slug: true, name: true, tagline: true, publishedAt: true },
       orderBy: { publishedAt: "desc" },
       take: 10,
-    }),
-    prisma.article.findMany({
+    }), []),
+    safeQuery(() => prisma.article.findMany({
       where: { status: "PUBLISHED" },
       select: { slug: true, title: true, excerpt: true, publishedAt: true },
       orderBy: { publishedAt: "desc" },
       take: 20,
-    }),
+    }), []),
   ]);
 
   const items = [

@@ -41,6 +41,14 @@ async function upsertTags(names: string[]): Promise<string[]> {
   return ids;
 }
 
+/**
+ * SEED_CONTENT=false seeds only the structural rows the app needs to
+ * function — categories and AI models — and skips the sample prompts,
+ * tools and articles. Use it on a production database you intend to fill
+ * with your own content.
+ */
+const SEED_CONTENT = process.env.SEED_CONTENT !== "false";
+
 async function main() {
   // ── Admins ───────────────────────────────────────────────────────────
   // The seed is what grants admin, so it fails loudly rather than silently
@@ -132,6 +140,11 @@ async function main() {
     });
   }
   console.log(`  ai models: ${AI_MODELS.length}`);
+
+  if (!SEED_CONTENT) {
+    console.log("  SEED_CONTENT=false — skipping sample prompts, tools and articles");
+    return;
+  }
 
   // ── Tools ────────────────────────────────────────────────────────────
   for (const t of TOOLS) {

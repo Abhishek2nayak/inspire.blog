@@ -14,7 +14,9 @@
     "db:migrate": "prisma migrate dev",
     "db:reset": "tsx prisma/reset.ts",
     "set-admin": "tsx scripts/set-admin.ts",
-    "check:cloudinary": "tsx scripts/check-cloudinary.ts"
+    "check:cloudinary": "tsx scripts/check-cloudinary.ts",
+    "create-admin": "tsx scripts/create-admin.ts",
+    "db:seed:structure": "SEED_CONTENT=false tsx prisma/seed.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.102.0",

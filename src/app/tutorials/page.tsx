@@ -4,6 +4,14 @@ import { prisma } from "@/lib/prisma";
 import { articleCardInclude, PUBLISHED } from "@/lib/queries";
 import { siteConfig, absoluteUrl } from "@/lib/site-config";
 import ArticleCard from "@/components/article/ArticleCard";
+import { safeQuery } from "@/lib/safe-query";
+
+/**
+ * Rendered on demand and revalidated, never prerendered against the database
+ * at build time. A deploy must not fail because the database is empty,
+ * unmigrated or asleep — that is what broke the first production build.
+ */
+export const revalidate = 3600;
 
 export const metadata: Metadata = {
   title: "Tutorials & guides",
@@ -13,11 +21,15 @@ export const metadata: Metadata = {
 };
 
 export default async function TutorialsPage() {
-  const articles = await prisma.article.findMany({
-    where: PUBLISHED,
-    include: articleCardInclude,
-    orderBy: [{ featured: "desc" }, { publishedAt: "desc" }],
-  });
+  const articles = await safeQuery(
+    () =>
+      prisma.article.findMany({
+        where: PUBLISHED,
+        include: articleCardInclude,
+        orderBy: [{ featured: "desc" }, { publishedAt: "desc" }],
+      }),
+    []
+  );
 
   const jsonLd = {
     "@context": "https://schema.org",
