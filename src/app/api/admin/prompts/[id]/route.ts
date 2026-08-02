@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { withApiErrors } from "@/lib/api-handler";
 import { prisma } from "@/lib/prisma";
 import { getCurrentAdmin } from "@/lib/session";
 import { generateSlug } from "@/lib/utils";
@@ -6,7 +7,7 @@ import { sanitizeHtml } from "@/lib/sanitize";
 import { upsertTags } from "@/lib/tags";
 
 /** GET one prompt with everything the editor needs. */
-export async function GET(
+async function GETHandler(
   _req: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
@@ -30,7 +31,7 @@ export async function GET(
 }
 
 /** PATCH — update, or publish. */
-export async function PATCH(
+async function PATCHHandler(
   req: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
@@ -130,7 +131,7 @@ export async function PATCH(
   return NextResponse.json(prompt);
 }
 
-export async function DELETE(
+async function DELETEHandler(
   _req: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
@@ -145,3 +146,7 @@ export async function DELETE(
   }
   return NextResponse.json({ ok: true });
 }
+
+export const GET = withApiErrors(GETHandler);
+export const PATCH = withApiErrors(PATCHHandler);
+export const DELETE = withApiErrors(DELETEHandler);

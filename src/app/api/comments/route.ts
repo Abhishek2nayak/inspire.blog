@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { withApiErrors } from "@/lib/api-handler";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/session";
 import { stripHtml } from "@/lib/sanitize";
@@ -8,7 +9,7 @@ const MAX_LENGTH = 2000;
 const MIN_SECONDS_BETWEEN_COMMENTS = 20;
 
 /** GET /api/comments?articleId=… | ?promptId=… */
-export async function GET(req: Request) {
+async function GETHandler(req: Request) {
   const url = new URL(req.url);
   const articleId = url.searchParams.get("articleId");
   const promptId = url.searchParams.get("promptId");
@@ -38,7 +39,7 @@ export async function GET(req: Request) {
 }
 
 /** POST a comment. Any signed-in reader; publishing rights are not required. */
-export async function POST(req: Request) {
+async function POSTHandler(req: Request) {
   const user = await getCurrentUser();
   if (!user?.id) {
     return NextResponse.json({ error: "Sign in to comment" }, { status: 401 });
@@ -90,3 +91,6 @@ export async function POST(req: Request) {
 
   return NextResponse.json(comment, { status: 201 });
 }
+
+export const GET = withApiErrors(GETHandler);
+export const POST = withApiErrors(POSTHandler);

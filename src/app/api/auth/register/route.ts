@@ -1,8 +1,9 @@
 import { NextResponse } from "next/server";
+import { withApiErrors } from "@/lib/api-handler";
 import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
 
-export async function POST(req: Request) {
+async function POSTHandler(req: Request) {
   try {
     const { name, email, password } = await req.json();
 
@@ -52,3 +53,5 @@ export async function POST(req: Request) {
     );
   }
 }
+
+export const POST = withApiErrors(POSTHandler);

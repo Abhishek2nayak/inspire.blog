@@ -1,9 +1,10 @@
 import { NextResponse } from "next/server";
+import { withApiErrors } from "@/lib/api-handler";
 import { prisma } from "@/lib/prisma";
 import { PUBLISHED } from "@/lib/queries";
 
 /** Search across all three content types. */
-export async function GET(req: Request) {
+async function GETHandler(req: Request) {
   const q = new URL(req.url).searchParams.get("q")?.trim();
 
   if (!q || q.length < 2) {
@@ -43,3 +44,5 @@ export async function GET(req: Request) {
     query: q,
   });
 }
+
+export const GET = withApiErrors(GETHandler);

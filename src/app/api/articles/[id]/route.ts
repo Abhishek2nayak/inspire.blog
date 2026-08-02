@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { withApiErrors } from "@/lib/api-handler";
 import { prisma } from "@/lib/prisma";
 import { getCurrentAdmin } from "@/lib/session";
 import { calculateReadTime, generateSlug, getExcerpt } from "@/lib/utils";
@@ -6,7 +7,7 @@ import { sanitizeHtml } from "@/lib/sanitize";
 import { upsertTags } from "@/lib/tags";
 
 /** GET a single article. Drafts are visible to admins only. */
-export async function GET(
+async function GETHandler(
   _req: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
@@ -29,7 +30,7 @@ export async function GET(
 }
 
 /** PATCH — update or publish. Admin only. */
-export async function PATCH(
+async function PATCHHandler(
   req: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
@@ -99,7 +100,7 @@ export async function PATCH(
 }
 
 /** DELETE. Admin only. */
-export async function DELETE(
+async function DELETEHandler(
   _req: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
@@ -115,3 +116,7 @@ export async function DELETE(
 
   return NextResponse.json({ ok: true });
 }
+
+export const GET = withApiErrors(GETHandler);
+export const PATCH = withApiErrors(PATCHHandler);
+export const DELETE = withApiErrors(DELETEHandler);

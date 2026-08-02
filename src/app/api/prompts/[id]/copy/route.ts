@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { withApiErrors } from "@/lib/api-handler";
 import { prisma } from "@/lib/prisma";
 
 /**
@@ -9,7 +10,7 @@ import { prisma } from "@/lib/prisma";
  * so a little inflation is acceptable; failures are swallowed so the client
  * never surfaces an error for a counter.
  */
-export async function POST(
+async function POSTHandler(
   _req: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
@@ -27,3 +28,5 @@ export async function POST(
 
   return NextResponse.json({ ok: true });
 }
+
+export const POST = withApiErrors(POSTHandler);

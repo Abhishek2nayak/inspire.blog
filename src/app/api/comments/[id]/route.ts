@@ -1,9 +1,10 @@
 import { NextResponse } from "next/server";
+import { withApiErrors } from "@/lib/api-handler";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser, getCurrentAdmin } from "@/lib/session";
 
 /** DELETE a comment. Author may delete their own; admins may delete any. */
-export async function DELETE(
+async function DELETEHandler(
   _req: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
@@ -25,3 +26,5 @@ export async function DELETE(
   await prisma.comment.delete({ where: { id } });
   return NextResponse.json({ ok: true });
 }
+
+export const DELETE = withApiErrors(DELETEHandler);

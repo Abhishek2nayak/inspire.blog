@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { withApiErrors } from "@/lib/api-handler";
 import { prisma } from "@/lib/prisma";
 import { getCurrentAdmin } from "@/lib/session";
 
@@ -10,7 +11,7 @@ import { getCurrentAdmin } from "@/lib/session";
  * height are stored because next/image needs them to avoid layout shift, and
  * ImageObject JSON-LD needs them for image rich results.
  */
-export async function POST(
+async function POSTHandler(
   req: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
@@ -51,7 +52,7 @@ export async function POST(
 }
 
 /** DELETE ?exampleId=… — remove one example. */
-export async function DELETE(
+async function DELETEHandler(
   req: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
@@ -73,3 +74,6 @@ export async function DELETE(
 
   return NextResponse.json({ ok: true });
 }
+
+export const POST = withApiErrors(POSTHandler);
+export const DELETE = withApiErrors(DELETEHandler);

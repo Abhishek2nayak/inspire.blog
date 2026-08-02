@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { withApiErrors } from "@/lib/api-handler";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/session";
 import { generateSlug } from "@/lib/utils";
@@ -18,7 +19,7 @@ const MIN_SECONDS_BETWEEN_SUBMISSIONS = 60;
  * Submit a prompt for review. Any signed-in user may submit; nothing goes
  * live until an admin approves it (status stays PENDING).
  */
-export async function POST(req: Request) {
+async function POSTHandler(req: Request) {
   const user = await getCurrentUser();
   if (!user?.id) {
     return NextResponse.json({ error: "Sign in to submit a prompt" }, { status: 401 });
@@ -146,3 +147,5 @@ export async function POST(req: Request) {
 
   return NextResponse.json(prompt, { status: 201 });
 }
+
+export const POST = withApiErrors(POSTHandler);

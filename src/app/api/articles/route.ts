@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { withApiErrors } from "@/lib/api-handler";
 import { prisma } from "@/lib/prisma";
 import { getCurrentAdmin } from "@/lib/session";
 import { generateSlug, calculateReadTime, getExcerpt } from "@/lib/utils";
@@ -11,7 +12,7 @@ import { articleCardInclude, PUBLISHED } from "@/lib/queries";
  *   ?mine=true            – admin's own articles
  *   ?include_drafts=true  – include non-published (admin only)
  */
-export async function GET(req: Request) {
+async function GETHandler(req: Request) {
   const url = new URL(req.url);
   const mine = url.searchParams.get("mine") === "true";
   const includeDrafts = url.searchParams.get("include_drafts") === "true";
@@ -36,7 +37,7 @@ export async function GET(req: Request) {
 }
 
 /** POST /api/articles — create a draft. Admin only. */
-export async function POST(req: Request) {
+async function POSTHandler(req: Request) {
   const admin = await getCurrentAdmin();
   if (!admin) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -93,3 +94,6 @@ export async function POST(req: Request) {
 
   return NextResponse.json(article, { status: 201 });
 }
+
+export const GET = withApiErrors(GETHandler);
+export const POST = withApiErrors(POSTHandler);

@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { withApiErrors } from "@/lib/api-handler";
 import { prisma } from "@/lib/prisma";
 import { getCurrentAdmin } from "@/lib/session";
 import { generateSlug } from "@/lib/utils";
@@ -7,7 +8,7 @@ import { upsertTags } from "@/lib/tags";
 import { OUTPUT_TYPE_VALUES } from "@/lib/prompts";
 
 /** GET — all prompts including drafts. Admin only. */
-export async function GET() {
+async function GETHandler() {
   const admin = await getCurrentAdmin();
   if (!admin) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
@@ -24,7 +25,7 @@ export async function GET() {
 }
 
 /** POST — create a prompt. Always starts as DRAFT. */
-export async function POST(req: Request) {
+async function POSTHandler(req: Request) {
   const admin = await getCurrentAdmin();
   if (!admin) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
@@ -88,3 +89,6 @@ export async function POST(req: Request) {
 
   return NextResponse.json(prompt, { status: 201 });
 }
+
+export const GET = withApiErrors(GETHandler);
+export const POST = withApiErrors(POSTHandler);

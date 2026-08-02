@@ -1,8 +1,9 @@
 import { NextResponse } from "next/server";
+import { withApiErrors } from "@/lib/api-handler";
 import { getCurrentUser } from "@/lib/session";
 import { prisma } from "@/lib/prisma";
 
-export async function GET() {
+async function GETHandler() {
   try {
     const currentUser = await getCurrentUser();
 
@@ -36,7 +37,7 @@ export async function GET() {
   }
 }
 
-export async function PATCH(req: Request) {
+async function PATCHHandler(req: Request) {
   try {
     const currentUser = await getCurrentUser();
 
@@ -70,3 +71,6 @@ export async function PATCH(req: Request) {
     );
   }
 }
+
+export const GET = withApiErrors(GETHandler);
+export const PATCH = withApiErrors(PATCHHandler);

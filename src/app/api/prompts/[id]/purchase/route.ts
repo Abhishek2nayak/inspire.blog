@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { withApiErrors } from "@/lib/api-handler";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/session";
 import { splitPrice } from "@/lib/prompt-access";
@@ -14,7 +15,7 @@ import { splitPrice } from "@/lib/prompt-access";
  * checkout flow can be tested end to end. When Stripe is added, the webhook
  * flips PENDING -> COMPLETED and that is the only change needed here.
  */
-export async function POST(
+async function POSTHandler(
   _req: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
@@ -83,3 +84,5 @@ export async function POST(
     { status: 501 }
   );
 }
+
+export const POST = withApiErrors(POSTHandler);

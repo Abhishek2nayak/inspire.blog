@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { withApiErrors } from "@/lib/api-handler";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/session";
 
@@ -21,7 +22,7 @@ function parse(body: Record<string, unknown>) {
   return { kind, id };
 }
 
-export async function GET() {
+async function GETHandler() {
   const user = await getCurrentUser();
   if (!user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
@@ -33,7 +34,7 @@ export async function GET() {
 }
 
 /** Toggle: creates the save, or removes it if it already exists. */
-export async function POST(req: Request) {
+async function POSTHandler(req: Request) {
   const user = await getCurrentUser();
   if (!user?.id) {
     return NextResponse.json({ error: "Sign in to save" }, { status: 401 });
@@ -66,3 +67,6 @@ export async function POST(req: Request) {
   });
   return NextResponse.json({ saved: true });
 }
+
+export const GET = withApiErrors(GETHandler);
+export const POST = withApiErrors(POSTHandler);

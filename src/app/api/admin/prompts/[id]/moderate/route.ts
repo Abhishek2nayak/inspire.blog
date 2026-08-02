@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { withApiErrors } from "@/lib/api-handler";
 import { prisma } from "@/lib/prisma";
 import { getCurrentAdmin } from "@/lib/session";
 
@@ -6,7 +7,7 @@ import { getCurrentAdmin } from "@/lib/session";
  * Approve or reject a submitted prompt.
  * Body: { action: "approve" | "reject", reason?: string }
  */
-export async function POST(
+async function POSTHandler(
   req: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
@@ -66,3 +67,5 @@ export async function POST(
 
   return NextResponse.json({ error: "action must be approve or reject" }, { status: 400 });
 }
+
+export const POST = withApiErrors(POSTHandler);
