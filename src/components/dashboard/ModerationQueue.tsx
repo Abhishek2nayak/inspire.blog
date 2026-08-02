@@ -8,6 +8,7 @@ import { Check, X, Loader2, ExternalLink } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { formatPrice } from "@/lib/prompt-access";
 import { getOutputTypeByValue } from "@/lib/prompts";
+import { describeApiError } from "@/lib/api-error";
 
 export interface PendingPrompt {
   id: string;
@@ -40,11 +41,13 @@ export default function ModerationQueue({ initial }: { initial: PendingPrompt[] 
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ action, reason: why }),
       });
-      const data = await res.json();
       if (!res.ok) {
-        toast({ title: "Couldn't do that", description: data.error, variant: "destructive" });
+        const description = await describeApiError(res);
+        console.error(`[moderate] HTTP ${res.status}:`, description);
+        toast({ title: `Couldn't do that (${res.status})`, description, variant: "destructive" });
         return;
       }
+      await res.json();
       setItems((p) => p.filter((x) => x.id !== id));
       setRejecting(null);
       setReason("");

@@ -8,6 +8,7 @@ import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { OUTPUT_TYPES, DIFFICULTIES } from "@/lib/prompts";
 import { siteConfig } from "@/lib/site-config";
+import { describeApiError } from "@/lib/api-error";
 
 const MAX_IMAGES = 5;
 
@@ -63,8 +64,8 @@ export default function SellPromptForm({
       const fd = new FormData();
       fd.append("file", file);
       const res = await fetch("/api/upload", { method: "POST", body: fd });
+      if (!res.ok) throw new Error(await describeApiError(res));
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error ?? "Upload failed");
       setImages((p) => [...p, { url: data.url, width: data.width, height: data.height }]);
     } catch (e) {
       toast({
@@ -95,9 +96,14 @@ export default function SellPromptForm({
           tags: v.tags.split(",").map((t) => t.trim()).filter(Boolean),
         }),
       });
-      const data = await res.json();
       if (!res.ok) {
-        toast({ title: "Couldn't submit", description: data.error, variant: "destructive" });
+        const description = await describeApiError(res);
+        console.error(`[prompt submit] HTTP ${res.status}:`, description);
+        toast({
+          title: `Couldn't submit (${res.status})`,
+          description,
+          variant: "destructive",
+        });
         return;
       }
       setDone(true);

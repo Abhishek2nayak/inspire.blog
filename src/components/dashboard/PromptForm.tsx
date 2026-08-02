@@ -8,6 +8,7 @@ import { Loader2, Trash2, Upload, ExternalLink, AlertTriangle } from "lucide-rea
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { OUTPUT_TYPES, DIFFICULTIES } from "@/lib/prompts";
+import { describeApiError } from "@/lib/api-error";
 
 interface ExampleRow {
   id: string;
@@ -82,17 +83,20 @@ export default function PromptForm({
         }
       );
 
-      const data = await res.json();
       if (!res.ok) {
-        // The publish guard returns 422 with a human-readable reason —
-        // surface it verbatim rather than a generic failure.
+        // Do NOT call res.json() before checking ok — a 500 returns HTML and
+        // the throw would hide the real reason behind a generic message.
+        const description = await describeApiError(res);
+        console.error(`[prompt save] HTTP ${res.status}:`, description);
         toast({
-          title: res.status === 422 ? "Can't publish yet" : "Couldn't save",
-          description: data.error ?? "Something went wrong.",
+          title: res.status === 422 ? "Can't publish yet" : `Couldn't save (${res.status})`,
+          description,
           variant: "destructive",
         });
         return;
       }
+
+      const data = await res.json();
 
       toast({
         title: nextStatus === "PUBLISHED" ? "Published" : "Saved",
@@ -101,8 +105,13 @@ export default function PromptForm({
 
       if (isNew) router.push(`/dashboard/prompts/${data.id}`);
       else router.refresh();
-    } catch {
-      toast({ title: "Couldn't save", variant: "destructive" });
+    } catch (e) {
+      console.error("[prompt save] network error:", e);
+      toast({
+        title: "Couldn't reach the server",
+        description: e instanceof Error ? e.message : "Check your connection and retry.",
+        variant: "destructive",
+      });
     } finally {
       setSaving(false);
     }
@@ -115,8 +124,8 @@ export default function PromptForm({
       const fd = new FormData();
       fd.append("file", file);
       const up = await fetch("/api/upload", { method: "POST", body: fd });
+      if (!up.ok) throw new Error(await describeApiError(up));
       const upData = await up.json();
-      if (!up.ok) throw new Error(upData.error ?? "Upload failed");
 
       const res = await fetch(`/api/admin/prompts/${v.id}/examples`, {
         method: "POST",
@@ -128,8 +137,8 @@ export default function PromptForm({
           alt: v.title,
         }),
       });
+      if (!res.ok) throw new Error(await describeApiError(res));
       const row = await res.json();
-      if (!res.ok) throw new Error(row.error ?? "Couldn't attach image");
 
       setRows((r) => [...r, row]);
       toast({ title: "Example added" });
