@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Logo from "@/components/shared/Logo";
 import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
@@ -33,13 +34,13 @@ function AuthInput({
   const [focused, setFocused] = useState(false);
   return (
     <div className="space-y-1">
-      <label htmlFor={id} className="block text-xs font-medium text-[#4a5568]">
+      <label htmlFor={id} className="block text-xs font-medium text-[var(--ink-soft)]">
         {label}
       </label>
       <div
         className={cn(
           "flex items-center rounded-lg border bg-white transition-all duration-150",
-          focused ? "border-[#2d7d59] ring-2 ring-[#2d7d59]/10" : "border-[#d1d9d5]"
+          focused ? "border-[var(--green-text)] ring-2 ring-[var(--green-text)]/10" : "border-[var(--rule)]"
         )}
       >
         <input
@@ -52,7 +53,7 @@ function AuthInput({
           disabled={disabled}
           onFocus={() => setFocused(true)}
           onBlur={() => setFocused(false)}
-          className="flex-1 h-10 px-3 bg-transparent text-sm text-[#1a2e28] placeholder:text-[#aab7b0] focus:outline-none disabled:opacity-50"
+          className="flex-1 h-10 px-3 bg-transparent text-sm text-[var(--ink)] placeholder:text-[var(--rule)] focus:outline-none disabled:opacity-50"
         />
         {suffix && <span className="pr-3 flex items-center">{suffix}</span>}
       </div>
@@ -117,12 +118,10 @@ export default function LoginPage() {
 
       {/* Brand heading — matches "MASTERY HUB" style */}
       <div className="mb-7 text-center">
-        <p className="text-xs font-semibold tracking-[0.25em] text-[#2d7d59] uppercase mb-1">
-          Your writing home
+        <p className="text-xs font-semibold tracking-[0.25em] text-[var(--green-text)] uppercase mb-1">
+          Welcome back
         </p>
-        <h1 className="text-2xl font-bold tracking-tight text-[#1a2e28]">
-          INSPIRE <span className="font-light text-[#4a7265]">BLOG</span>
-        </h1>
+        <Logo size="lg" asLink={false} />
       </div>
 
       {/* Form */}
@@ -152,7 +151,7 @@ export default function LoginPage() {
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="text-[#aab7b0] hover:text-[#2d7d59] transition-colors"
+                className="text-[var(--rule)] hover:text-[var(--green-text)] transition-colors"
               >
                 {showPassword ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
               </button>
@@ -162,7 +161,7 @@ export default function LoginPage() {
           <div className="flex justify-end mt-1">
             <button
               type="button"
-              className="text-xs text-[#2d7d59] hover:text-[#1a5c40] hover:underline transition-colors"
+              className="text-xs text-[var(--green-text)] hover:text-[var(--green-deep)] hover:underline transition-colors"
             >
               Forgot password?
             </button>
@@ -174,7 +173,7 @@ export default function LoginPage() {
           type="submit"
           disabled={loading || googleLoading}
           className="w-full h-10 flex items-center justify-center rounded-lg text-sm font-semibold text-white transition-all hover:opacity-90 active:scale-[0.99] disabled:opacity-60 disabled:cursor-not-allowed mt-1"
-          style={{ backgroundColor: "#1a2e28" }}
+          style={{ backgroundColor: "var(--ink)" }}
         >
           {loading ? (
             <Loader2 className="h-4 w-4 animate-spin" />
@@ -187,10 +186,10 @@ export default function LoginPage() {
       {/* Divider */}
       <div className="relative my-5">
         <div className="absolute inset-0 flex items-center">
-          <div className="w-full border-t border-[#e2ebe7]" />
+          <div className="w-full border-t border-[var(--paper-cool)]" />
         </div>
         <div className="relative flex justify-center">
-          <span className="bg-white px-3 text-xs text-[#9ab5ac]">or</span>
+          <span className="bg-white px-3 text-xs text-[var(--rule-strong)]">or</span>
         </div>
       </div>
 
@@ -199,10 +198,10 @@ export default function LoginPage() {
         type="button"
         onClick={handleGoogleSignIn}
         disabled={googleLoading || loading}
-        className="w-full h-10 flex items-center justify-center gap-2.5 rounded-lg border border-[#d1d9d5] bg-white text-sm text-[#1a2e28] font-medium hover:bg-[#f5faf7] hover:border-[#b0c9be] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+        className="w-full h-10 flex items-center justify-center gap-2.5 rounded-lg border border-[var(--rule)] bg-white text-sm text-[var(--ink)] font-medium hover:bg-[var(--paper-cool)] hover:border-[var(--rule-strong)] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
       >
         {googleLoading ? (
-          <Loader2 className="h-4 w-4 animate-spin text-[#9ab5ac]" />
+          <Loader2 className="h-4 w-4 animate-spin text-[var(--rule-strong)]" />
         ) : (
           <GoogleIcon />
         )}
@@ -210,11 +209,11 @@ export default function LoginPage() {
       </button>
 
       {/* Sign up link */}
-      <p className="mt-5 text-center text-xs text-[#7a9d90]">
+      <p className="mt-5 text-center text-xs text-[var(--ink-soft)]">
         Are you new?{" "}
         <Link
           href="/register"
-          className="text-[#2d7d59] font-medium hover:text-[#1a5c40] hover:underline transition-colors"
+          className="text-[var(--green-text)] font-medium hover:text-[var(--green-deep)] hover:underline transition-colors"
         >
           Create an Account
         </Link>

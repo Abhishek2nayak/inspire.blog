@@ -230,7 +230,7 @@ const SLASH_COMMANDS = [
 
 type SlashCommand = (typeof SLASH_COMMANDS)[number];
 
-const DRAFT_KEY = "inspire_draft_new";
+const DRAFT_KEY = "makeframe_draft_new";
 
 /* ── Simple markdown → HTML converter ── */
 function escHtml(s: string) {

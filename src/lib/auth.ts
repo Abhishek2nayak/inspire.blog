@@ -66,43 +66,32 @@ export const authOptions: NextAuthOptions = {
   },
   callbacks: {
     async jwt({ token, user, trigger }) {
-      if (user) {
-        token.id = user.id;
-      }
-      if (trigger === "signIn" || trigger === "update" || !token.onboarded) {
+      if (user) token.id = user.id;
+
+      // Role is read once at sign-in and cached on the token, so this is not
+      // a per-request DB hit. It exists purely so client components can hide
+      // admin-only UI — every server-side gate still reads User.role from the
+      // database via getCurrentAdmin(), because a JWT claim is user-supplied
+      // data and must never be the authority for access control.
+      if ((trigger === "signIn" || trigger === "update" || !token.role) && token.id) {
         const dbUser = await prisma.user.findUnique({
           where: { id: token.id as string },
-          select: { onboarded: true },
+          select: { role: true },
         });
-        if (dbUser) {
-          token.onboarded = dbUser.onboarded;
-        }
+        token.role = dbUser?.role ?? "READER";
       }
       return token;
     },
     async session({ session, token }) {
       if (session.user) {
-        (session.user as { id: string; onboarded?: boolean }).id =
-          token.id as string;
-        (session.user as { id: string; onboarded?: boolean }).onboarded =
-          token.onboarded as boolean | undefined;
+        const u = session.user as { id: string; role?: string };
+        u.id = token.id as string;
+        u.role = (token.role as string) ?? "READER";
       }
       return session;
     },
   },
   pages: {
     signIn: "/login",
-  },
-  events: {
-    async signIn({ user }) {
-      const dbUser = await prisma.user.findUnique({
-        where: { id: user.id },
-        select: { onboarded: true },
-      });
-      if (dbUser && !dbUser.onboarded) {
-        // onboarded flag is false; frontend should redirect to /onboarding
-        // based on the session token value
-      }
-    },
   },
 };

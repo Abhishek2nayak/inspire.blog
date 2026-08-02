@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Makeframe">
+  <rect width="64" height="64" rx="10" fill="#FBFBF0"/>
+  <!-- lime fill offset behind the frame: the riso misregistration cue -->
+  <rect x="16" y="16" width="34" height="34" rx="3" fill="#8ED462"/>
+  <!-- ink frame -->
+  <rect x="12" y="12" width="34" height="34" rx="3" fill="none" stroke="#2C2E2A" stroke-width="5"/>
+</svg>

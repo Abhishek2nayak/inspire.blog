@@ -23,7 +23,7 @@ import {
   CommandSeparator,
 } from "@/components/ui/command";
 
-const RECENT_POSTS_KEY = "blogosphere_recent_posts";
+const RECENT_POSTS_KEY = "makeframe_recent_posts";
 
 interface RecentPost {
   title: string;

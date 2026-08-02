@@ -36,20 +36,21 @@ export default function NewPostPage() {
 
     setSaving(true);
     try {
-      const res = await fetch("/api/posts", {
+      const res = await fetch("/api/articles", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           title: data.title,
           subtitle: data.subtitle || undefined,
           content: data.content,
-          contentMd: data.contentMd,
           coverImage: data.coverImage,
           tags: data.tags,
-          published: data.published,
+          // The API models publication as a ContentStatus enum, not a
+          // boolean. Without this mapping "Publish" silently saved a draft.
+          status: data.published ? "PUBLISHED" : "DRAFT",
           metaTitle: data.metaTitle || undefined,
           metaDesc: data.metaDesc || undefined,
-          canonicalUrl: data.canonicalUrl || undefined,
+          canonical: data.canonicalUrl || undefined,
         }),
       });
 

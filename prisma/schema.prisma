@@ -1,3 +1,9 @@
+// Makeframe — AI prompts and tools for creators.
+//
+// Three first-class content types: Article (tutorials/guides), Prompt (the
+// copy-paste library) and Tool (the reviewed directory). Readers may sign up
+// to save and comment, but only ADMINs author content.
+
 generator client {
   provider = "prisma-client-js"
 }
@@ -7,6 +13,80 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+// ─────────────────────────── enums ───────────────────────────
+
+enum Role {
+  READER
+  ADMIN
+}
+
+enum ContentStatus {
+  DRAFT
+  /// Submitted by a seller, waiting on admin approval.
+  PENDING
+  REVIEW
+  PUBLISHED
+  /// Rejected by an admin; rejectionReason explains why.
+  REJECTED
+  ARCHIVED
+}
+
+enum PurchaseStatus {
+  PENDING
+  COMPLETED
+  REFUNDED
+  FAILED
+}
+
+enum ArticleKind {
+  TUTORIAL
+  GUIDE
+  COMPARISON
+  ROUNDUP
+  NEWS
+}
+
+enum PromptKind {
+  IMAGE
+  VIDEO
+  TEXT
+}
+
+enum Difficulty {
+  BEGINNER
+  INTERMEDIATE
+  ADVANCED
+}
+
+enum PricingTier {
+  FREE
+  FREEMIUM
+  PAID
+}
+
+enum SaveKind {
+  ARTICLE
+  PROMPT
+  TOOL
+}
+
+/// What the reader is actually making. Mirrors OUTPUT_TYPES in src/lib/prompts.ts.
+enum OutputType {
+  INSTAGRAM_POST
+  INSTAGRAM_CAROUSEL
+  INSTAGRAM_STORY
+  YOUTUBE_THUMBNAIL
+  REEL_SHORT
+  BANNER
+  POSTER
+  LOGO
+  PRODUCT_SHOT
+  AVATAR
+  AD_CREATIVE
+}
+
+// ─────────────────────────── identity ───────────────────────────
+
 model User {
   id            String    @id @default(cuid())
   name          String?
@@ -15,28 +95,25 @@ model User {
   password      String?
   image         String?
   bio           String?   @db.Text
-  website       String?
-  twitter       String?
-  github        String?
-  location      String?
-  onboarded     Boolean   @default(false)
+  role          Role      @default(READER)
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
-  accounts             Account[]
-  sessions             Session[]
-  posts                Post[]
-  comments             Comment[]
-  likes                Like[]
-  bookmarks            Bookmark[]
-  followers            Follow[]             @relation("following")
-  following            Follow[]             @relation("follower")
-  notifications        Notification[]       @relation("notificationRecipient")
-  notificationsTrigger Notification[]       @relation("notificationActor")
-  interests            UserInterest[]
-  series               Series[]
-  reactions            Reaction[]
-  readingList          ReadingList[]
+  /// Shown on the seller's public prompt listings.
+  sellerName String?
+  /// Where payouts will go. Collected now, used when payments are wired.
+  payoutEmail String?
+
+  accounts  Account[]
+  sessions  Session[]
+  articles  Article[]
+  prompts   Prompt[]
+  comments  Comment[]
+  bookmarks Bookmark[]
+  purchases Purchase[]
+  approvals Prompt[]   @relation("PromptApprover")
+
+  @@index([role])
 }
 
 model Account {
@@ -55,14 +132,21 @@ model Account {
   user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([provider, providerAccountId])
+  @@index([userId])
 }
 
+/// Kept deliberately. Never written under the JWT strategy, but
+/// @next-auth/prisma-adapter's methods reference these models, so dropping
+/// them would mean dropping the adapter (and Account persistence with it).
+/// Two empty tables is the cheaper trade.
 model Session {
   id           String   @id @default(cuid())
   sessionToken String   @unique
   userId       String
   expires      DateTime
   user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
 }
 
 model VerificationToken {
@@ -73,174 +157,399 @@ model VerificationToken {
   @@unique([identifier, token])
 }
 
-model Post {
-  id          String    @id @default(cuid())
-  title       String
-  slug        String    @unique
-  content     String    @db.Text
-  contentMd   String?   @db.Text
-  excerpt     String?   @db.Text
-  coverImage  String?
-  published   Boolean   @default(false)
-  featured    Boolean   @default(false)
-  publishedAt DateTime?
-  scheduledAt DateTime?
-  views       Int       @default(0)
-  readTime    Int       @default(0)
-  metaTitle   String?
-  metaDesc    String?
-  canonical   String?
-  authorId    String
-  seriesId    String?
-  seriesOrder Int?
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+// ─────────────────────────── taxonomy ───────────────────────────
 
-  author      User          @relation(fields: [authorId], references: [id], onDelete: Cascade)
-  tags        PostTag[]
-  comments    Comment[]
-  likes       Like[]
-  bookmarks   Bookmark[]
-  reactions   Reaction[]
-  readingList ReadingList[]
-  series      Series?       @relation(fields: [seriesId], references: [id])
-}
-
-model Series {
+model Category {
   id          String   @id @default(cuid())
-  title       String
+  name        String   @unique
   slug        String   @unique
+  tagline     String?
   description String?  @db.Text
-  coverImage  String?
-  authorId    String
+  /// Riso chip token key ("coral" | "yellow" | ...), never a hex.
+  chip        String   @default("lime")
+  order       Int      @default(0)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  author User   @relation(fields: [authorId], references: [id], onDelete: Cascade)
-  posts  Post[]
+  articles Article[]
+  prompts  Prompt[]
+  tools    Tool[]
 }
 
 model Tag {
-  id    String    @id @default(cuid())
-  name  String    @unique
-  slug  String    @unique
-  color String?
-  posts PostTag[]
+  id   String @id @default(cuid())
+  name String @unique
+  slug String @unique
+
+  articles ArticleTag[]
+  prompts  PromptTag[]
+  tools    ToolTag[]
 }
 
-model PostTag {
-  postId String
+model ArticleTag {
+  articleId String
+  tagId     String
+  article   Article @relation(fields: [articleId], references: [id], onDelete: Cascade)
+  tag       Tag     @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@id([articleId, tagId])
+  @@index([tagId])
+}
+
+model PromptTag {
+  promptId String
+  tagId    String
+  prompt   Prompt @relation(fields: [promptId], references: [id], onDelete: Cascade)
+  tag      Tag    @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@id([promptId, tagId])
+  @@index([tagId])
+}
+
+model ToolTag {
+  toolId String
   tagId  String
-  post   Post   @relation(fields: [postId], references: [id], onDelete: Cascade)
-  tag    Tag    @relation(fields: [tagId], references: [id], onDelete: Cascade)
+  tool   Tool @relation(fields: [toolId], references: [id], onDelete: Cascade)
+  tag    Tag  @relation(fields: [tagId], references: [id], onDelete: Cascade)
 
-  @@id([postId, tagId])
+  @@id([toolId, tagId])
+  @@index([tagId])
 }
+
+/// A table rather than an enum on purpose: new models ship monthly, and a
+/// launch is exactly when you want to publish fastest. Adding one is a row
+/// insert, not a migration + redeploy. Also gives /models/[slug] pillar pages.
+model AiModel {
+  id     String     @id @default(cuid())
+  name   String     @unique
+  slug   String     @unique
+  vendor String?
+  kind   PromptKind @default(IMAGE)
+  logo   String?
+  url    String?
+  blurb  String?    @db.Text
+  order  Int        @default(0)
+
+  prompts Prompt[]
+
+  @@index([kind])
+}
+
+// ─────────────────────────── articles ───────────────────────────
+
+model Article {
+  id          String        @id @default(cuid())
+  title       String
+  slug        String        @unique
+  subtitle    String?
+  excerpt     String?       @db.Text
+  /// Sanitized HTML. Written through src/lib/sanitize.ts, never raw.
+  content     String        @db.Text
+  coverImage  String?
+  coverAlt    String?
+  kind        ArticleKind   @default(TUTORIAL)
+  status      ContentStatus @default(DRAFT)
+  difficulty  Difficulty?
+  featured    Boolean       @default(false)
+  views       Int           @default(0)
+  readTime    Int           @default(0)
+  publishedAt DateTime?
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  metaTitle   String?
+  metaDesc    String?
+  canonical   String?
+
+  authorId   String
+  categoryId String?
+  author     User      @relation(fields: [authorId], references: [id], onDelete: Restrict)
+  category   Category? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+
+  steps     ArticleStep[]
+  tags      ArticleTag[]
+  comments  Comment[]
+  bookmarks Bookmark[]
+  prompts   ArticlePrompt[]
+  tools     ArticleTool[]
+
+  @@index([status, publishedAt(sort: Desc)])
+  @@index([categoryId, status, publishedAt(sort: Desc)])
+  @@index([kind, status, publishedAt(sort: Desc)])
+  @@index([featured, status])
+}
+
+/// Powers both the step renderer and HowTo JSON-LD. Optional per article:
+/// zero steps renders plain HTML, steps present renders the step UI.
+model ArticleStep {
+  id        String  @id @default(cuid())
+  articleId String
+  order     Int
+  title     String
+  /// Sanitized HTML.
+  body      String  @db.Text
+  image     String?
+  imageAlt  String?
+  tip       String? @db.Text
+  article   Article @relation(fields: [articleId], references: [id], onDelete: Cascade)
+
+  @@unique([articleId, order])
+  @@index([articleId])
+}
+
+// ─────────────────────────── prompts ───────────────────────────
+
+model Prompt {
+  id          String        @id @default(cuid())
+  title       String
+  slug        String        @unique
+  /// The copy-paste payload. PLAIN TEXT — never HTML.
+  body        String        @db.Text
+  negative    String?       @db.Text
+  description String?       @db.Text
+  /// Sanitized HTML.
+  tips        String?       @db.Text
+  kind        PromptKind    @default(IMAGE)
+  outputType  OutputType
+  difficulty  Difficulty    @default(BEGINNER)
+  aspectRatio String?
+  /// e.g. "--ar 9:16 --style raw --v 7"
+  parameters  String?
+  status      ContentStatus @default(DRAFT)
+  featured    Boolean       @default(false)
+  views       Int           @default(0)
+  /// Clipboard copies. The engagement metric that actually matters here,
+  /// and the ranking key for "most copied".
+  copies      Int           @default(0)
+
+  // ── Marketplace ────────────────────────────────────────────────────
+  /// Price in the smallest currency unit (paise / cents). 0 means free.
+  /// Integer on purpose — never store money as a float.
+  priceCents  Int           @default(0)
+  currency    String        @default("USD")
+  /// Platform's cut at the time of listing. Snapshotted per prompt so
+  /// changing the global rate later cannot rewrite existing deals.
+  platformFeePercent Int    @default(20)
+  /// Sales counter, denormalised for sorting without a join.
+  sales       Int           @default(0)
+
+  // ── Moderation ─────────────────────────────────────────────────────
+  submittedAt     DateTime?
+  approvedAt      DateTime?
+  approvedById    String?
+  rejectionReason String?   @db.Text
+  publishedAt DateTime?
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  metaTitle   String?
+  metaDesc    String?
+
+  authorId   String
+  categoryId String?
+  modelId    String?
+  author     User      @relation(fields: [authorId], references: [id], onDelete: Restrict)
+  approvedBy User?     @relation("PromptApprover", fields: [approvedById], references: [id], onDelete: SetNull)
+  category   Category? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  model      AiModel?  @relation(fields: [modelId], references: [id], onDelete: SetNull)
+
+  purchases  Purchase[]
+  examples   PromptExample[]
+  variations PromptVariation[]
+  tags       PromptTag[]
+  tools      PromptTool[]
+  articles   ArticlePrompt[]
+  bookmarks  Bookmark[]
+  comments   Comment[]
+
+  @@index([status, publishedAt(sort: Desc)])
+  @@index([outputType, status])
+  @@index([modelId, status])
+  @@index([categoryId, status])
+  @@index([status, copies(sort: Desc)])
+  @@index([status, priceCents])
+  @@index([authorId, status])
+  @@index([status, sales(sort: Desc)])
+}
+
+/// A completed (or attempted) purchase of a paid prompt.
+///
+/// The split is snapshotted in cents at purchase time rather than recomputed
+/// from platformFeePercent — a later rate change must not retroactively alter
+/// what a seller already earned.
+model Purchase {
+  id               String         @id @default(cuid())
+  userId           String
+  promptId         String
+  pricePaidCents   Int
+  platformFeeCents Int
+  sellerEarnsCents Int
+  currency         String         @default("USD")
+  status           PurchaseStatus @default(PENDING)
+  /// Payment provider and its reference. Null until payments are wired up.
+  provider         String?
+  providerRef      String?
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  prompt Prompt @relation(fields: [promptId], references: [id], onDelete: Cascade)
+
+  /// One purchase per user per prompt — re-buying is a no-op, not a duplicate.
+  @@unique([userId, promptId])
+  @@index([promptId, status])
+  @@index([userId, status])
+}
+
+model PromptExample {
+  id       String  @id @default(cuid())
+  promptId String
+  url      String
+  alt      String?
+  caption  String?
+  isVideo  Boolean @default(false)
+  /// Required for next/image and for ImageObject/VideoObject JSON-LD.
+  width    Int?
+  height   Int?
+  order    Int     @default(0)
+  prompt   Prompt  @relation(fields: [promptId], references: [id], onDelete: Cascade)
+
+  @@index([promptId, order])
+}
+
+model PromptVariation {
+  id       String @id @default(cuid())
+  promptId String
+  label    String
+  body     String @db.Text
+  order    Int    @default(0)
+  prompt   Prompt @relation(fields: [promptId], references: [id], onDelete: Cascade)
+
+  @@index([promptId, order])
+}
+
+// ─────────────────────────── tools ───────────────────────────
+
+model Tool {
+  id           String        @id @default(cuid())
+  name         String        @unique
+  slug         String        @unique
+  tagline      String
+  /// Sanitized HTML review body.
+  description  String        @db.Text
+  logo         String?
+  screenshot   String?
+  pricing      PricingTier   @default(FREEMIUM)
+  priceNote    String?
+  /// Always populated. The affiliate link is separate and optional.
+  officialUrl  String
+  affiliateUrl String?
+  rating       Float?
+  bestFor      String?
+  pros         String[]
+  cons         String[]
+  status       ContentStatus @default(DRAFT)
+  featured     Boolean       @default(false)
+  views        Int           @default(0)
+  /// Outbound clicks via /go/[slug].
+  clicks       Int           @default(0)
+  publishedAt  DateTime?
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  metaTitle    String?
+  metaDesc     String?
+
+  categoryId String?
+  category   Category? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+
+  tags      ToolTag[]
+  prompts   PromptTool[]
+  articles  ArticleTool[]
+  bookmarks Bookmark[]
+
+  @@index([status, featured])
+  @@index([categoryId, status])
+  @@index([pricing, status])
+}
+
+// ───────────────────── cross-type relations ─────────────────────
+
+model ArticlePrompt {
+  articleId String
+  promptId  String
+  order     Int     @default(0)
+  /// e.g. "use this one for the thumbnail in step 3"
+  note      String?
+  article   Article @relation(fields: [articleId], references: [id], onDelete: Cascade)
+  prompt    Prompt  @relation(fields: [promptId], references: [id], onDelete: Cascade)
+
+  @@id([articleId, promptId])
+  @@index([promptId])
+}
+
+model ArticleTool {
+  articleId String
+  toolId    String
+  order     Int     @default(0)
+  note      String?
+  article   Article @relation(fields: [articleId], references: [id], onDelete: Cascade)
+  tool      Tool    @relation(fields: [toolId], references: [id], onDelete: Cascade)
+
+  @@id([articleId, toolId])
+  @@index([toolId])
+}
+
+model PromptTool {
+  promptId String
+  toolId   String
+  prompt   Prompt @relation(fields: [promptId], references: [id], onDelete: Cascade)
+  tool     Tool   @relation(fields: [toolId], references: [id], onDelete: Cascade)
+
+  @@id([promptId, toolId])
+  @@index([toolId])
+}
+
+// ─────────────────────── reader activity ───────────────────────
 
 model Comment {
   id        String   @id @default(cuid())
+  /// PLAIN TEXT. Rendered escaped by React — never dangerouslySetInnerHTML.
   content   String   @db.Text
-  postId    String
+  hidden    Boolean  @default(false)
   authorId  String
+  articleId String?
+  promptId  String?
   parentId  String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  post    Post      @relation(fields: [postId], references: [id], onDelete: Cascade)
   author  User      @relation(fields: [authorId], references: [id], onDelete: Cascade)
-  parent  Comment?  @relation("CommentReplies", fields: [parentId], references: [id])
+  article Article?  @relation(fields: [articleId], references: [id], onDelete: Cascade)
+  prompt  Prompt?   @relation(fields: [promptId], references: [id], onDelete: Cascade)
+  parent  Comment?  @relation("CommentReplies", fields: [parentId], references: [id], onDelete: Cascade)
   replies Comment[] @relation("CommentReplies")
+
+  @@index([articleId, createdAt])
+  @@index([promptId, createdAt])
+  @@index([authorId])
+  @@index([parentId])
 }
 
-model Like {
-  id        String   @id @default(cuid())
-  postId    String
-  userId    String
-  createdAt DateTime @default(now())
-
-  post Post @relation(fields: [postId], references: [id], onDelete: Cascade)
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@unique([postId, userId])
-}
-
-model Reaction {
-  id        String   @id @default(cuid())
-  emoji     String
-  postId    String
-  userId    String
-  createdAt DateTime @default(now())
-
-  post Post @relation(fields: [postId], references: [id], onDelete: Cascade)
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@unique([postId, userId, emoji])
-}
-
+/// One saved-items table across all three content types.
 model Bookmark {
   id        String   @id @default(cuid())
-  postId    String
   userId    String
+  kind      SaveKind
+  articleId String?
+  promptId  String?
+  toolId    String?
   createdAt DateTime @default(now())
 
-  post Post @relation(fields: [postId], references: [id], onDelete: Cascade)
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  article Article? @relation(fields: [articleId], references: [id], onDelete: Cascade)
+  prompt  Prompt?  @relation(fields: [promptId], references: [id], onDelete: Cascade)
+  tool    Tool?    @relation(fields: [toolId], references: [id], onDelete: Cascade)
 
-  @@unique([postId, userId])
-}
-
-model ReadingList {
-  id        String   @id @default(cuid())
-  postId    String
-  userId    String
-  createdAt DateTime @default(now())
-
-  post Post @relation(fields: [postId], references: [id], onDelete: Cascade)
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@unique([postId, userId])
-}
-
-model Follow {
-  id          String   @id @default(cuid())
-  followerId  String
-  followingId String
-  createdAt   DateTime @default(now())
-
-  follower  User @relation("follower", fields: [followerId], references: [id], onDelete: Cascade)
-  following User @relation("following", fields: [followingId], references: [id], onDelete: Cascade)
-
-  @@unique([followerId, followingId])
-}
-
-model Interest {
-  id    String         @id @default(cuid())
-  name  String         @unique
-  icon  String?
-  color String?
-  users UserInterest[]
-}
-
-model UserInterest {
-  userId     String
-  interestId String
-
-  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  interest Interest @relation(fields: [interestId], references: [id], onDelete: Cascade)
-
-  @@id([userId, interestId])
-}
-
-model Notification {
-  id          String   @id @default(cuid())
-  type        String
-  recipientId String
-  actorId     String
-  postId      String?
-  commentId   String?
-  read        Boolean  @default(false)
-  createdAt   DateTime @default(now())
-
-  recipient User @relation("notificationRecipient", fields: [recipientId], references: [id], onDelete: Cascade)
-  actor     User @relation("notificationActor", fields: [actorId], references: [id], onDelete: Cascade)
+  @@unique([userId, articleId])
+  @@unique([userId, promptId])
+  @@unique([userId, toolId])
+  @@index([userId, kind, createdAt])
 }

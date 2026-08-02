@@ -7,8 +7,6 @@ import { useRouter, usePathname } from "next/navigation";
 import { useSession, signOut } from "next-auth/react";
 import {
   Search,
-  Bell,
-  PenSquare,
   Menu,
   X,
   LogOut,
@@ -17,6 +15,7 @@ import {
   User,
   Bookmark,
   ChevronDown,
+  Layers,
 } from "lucide-react";
 import { cn, getInitials } from "@/lib/utils";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
@@ -28,6 +27,7 @@ import {
   DropdownMenuItem,
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
+import { CLUSTERS } from "@/lib/categories";
 
 const Navbar: React.FC = () => {
   const { data: session, status } = useSession();
@@ -42,6 +42,8 @@ const Navbar: React.FC = () => {
   const unreadNotifications = 0;
   const isLoggedIn = status === "authenticated" && !!session?.user;
   const user = session?.user;
+  // Display-only: hides a link a non-admin would 404 on. Not a security gate.
+  const isAdmin = (user as { role?: string } | undefined)?.role === "ADMIN";
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 4);
@@ -90,8 +92,38 @@ const Navbar: React.FC = () => {
 
         {/* Nav links — desktop */}
         <div className="hidden items-center gap-0.5 md:flex">
-          <NavLink href="/feed">Explore</NavLink>
-          {isLoggedIn && <NavLink href="/bookmarks">Bookmarks</NavLink>}
+          <NavLink href="/prompts">Prompts</NavLink>
+          <NavLink href="/tools">Tools</NavLink>
+          <NavLink href="/tutorials">Tutorials</NavLink>
+          <NavLink href="/sell">Sell</NavLink>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button className="flex items-center gap-1 rounded-lg px-3 py-1.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted/60 hover:text-foreground focus:outline-none">
+                Topics
+                <ChevronDown className="h-3 w-3" />
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="start" className="w-64">
+              {CLUSTERS.map((c) => (
+                <DropdownMenuItem key={c.slug} asChild>
+                  <Link
+                    href={`/category/${c.slug}`}
+                    className="flex-col items-start gap-0"
+                  >
+                    <span className="text-sm font-medium text-foreground">{c.name}</span>
+                    <span className="text-xs text-muted-foreground">{c.tagline}</span>
+                  </Link>
+                </DropdownMenuItem>
+              ))}
+              <DropdownMenuSeparator />
+              <DropdownMenuItem asChild>
+                <Link href="/categories">
+                  <span className="text-sm">All topics →</span>
+                </Link>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+          {isLoggedIn && <NavLink href="/saved">Saved</NavLink>}
         </div>
 
         <div className="flex-1" />
@@ -130,31 +162,6 @@ const Navbar: React.FC = () => {
         <div className="flex items-center gap-1">
           {isLoggedIn ? (
             <>
-              {/* Write button */}
-              <button
-                onClick={() => router.push("/editor/new")}
-                className="hidden items-center gap-1.5 rounded-lg bg-foreground px-3 py-1.5 text-sm font-medium text-background transition-opacity hover:opacity-90 sm:flex"
-              >
-                <PenSquare className="h-3.5 w-3.5" />
-                Write
-              </button>
-
-              {/* Notifications */}
-              <button
-                onClick={() => router.push("/notifications")}
-                className="relative flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-                aria-label="Notifications"
-              >
-                <Bell className="h-4 w-4" />
-                {unreadNotifications > 0 && (
-                  <Badge
-                    variant="destructive"
-                    className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full p-0 text-[10px]"
-                  >
-                    {unreadNotifications > 9 ? "9+" : unreadNotifications}
-                  </Badge>
-                )}
-              </button>
 
               {/* User menu */}
               <DropdownMenu>
@@ -175,17 +182,31 @@ const Navbar: React.FC = () => {
                     <p className="truncate text-xs text-muted-foreground">{user?.email}</p>
                   </div>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={() => router.push("/dashboard")}>
-                    <LayoutDashboard className="mr-2 h-4 w-4" />Dashboard
+                  {isAdmin && (
+                    <DropdownMenuItem asChild>
+                      <Link href="/dashboard">
+                        <LayoutDashboard className="mr-2 h-4 w-4" />
+                        Dashboard
+                      </Link>
+                    </DropdownMenuItem>
+                  )}
+                  <DropdownMenuItem asChild>
+                    <Link href="/saved">
+                      <Bookmark className="mr-2 h-4 w-4" />
+                      Saved
+                    </Link>
                   </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => router.push("/profile")}>
-                    <User className="mr-2 h-4 w-4" />Profile
+                  <DropdownMenuItem asChild>
+                    <Link href="/sell">
+                      <User className="mr-2 h-4 w-4" />
+                      Sell a prompt
+                    </Link>
                   </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => router.push("/bookmarks")}>
-                    <Bookmark className="mr-2 h-4 w-4" />Bookmarks
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => router.push("/settings")}>
-                    <Settings className="mr-2 h-4 w-4" />Settings
+                  <DropdownMenuItem asChild>
+                    <Link href="/settings">
+                      <Settings className="mr-2 h-4 w-4" />
+                      Settings
+                    </Link>
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem
@@ -247,21 +268,32 @@ const Navbar: React.FC = () => {
             </div>
           </form>
 
-          <MobileLink href="/feed" icon={<Search className="h-4 w-4" />}>Explore</MobileLink>
+          <MobileLink href="/prompts" icon={<Search className="h-4 w-4" />}>Prompts</MobileLink>
+          <MobileLink href="/tools" icon={<Search className="h-4 w-4" />}>Tools</MobileLink>
+          <MobileLink href="/tutorials" icon={<Search className="h-4 w-4" />}>Tutorials</MobileLink>
+          <MobileLink href="/sell" icon={<Search className="h-4 w-4" />}>Sell a prompt</MobileLink>
+
+          <div className="my-2 border-t border-border" />
+          <p className="px-3 pb-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+            Topics
+          </p>
+          {CLUSTERS.map((c) => (
+            <MobileLink
+              key={c.slug}
+              href={`/category/${c.slug}`}
+              icon={<Layers className="h-4 w-4" />}
+            >
+              {c.name}
+            </MobileLink>
+          ))}
+          <div className="my-2 border-t border-border" />
 
           {isLoggedIn ? (
             <>
-              <MobileLink href="/editor/new" icon={<PenSquare className="h-4 w-4" />}>Write new post</MobileLink>
-              <MobileLink href="/notifications" icon={<Bell className="h-4 w-4" />}>
-                Notifications
-                {unreadNotifications > 0 && (
-                  <Badge variant="destructive" className="ml-auto h-5 text-xs">{unreadNotifications}</Badge>
-                )}
-              </MobileLink>
               <div className="my-2 border-t border-border" />
               <MobileLink href="/dashboard" icon={<LayoutDashboard className="h-4 w-4" />}>Dashboard</MobileLink>
               <MobileLink href="/profile" icon={<User className="h-4 w-4" />}>Profile</MobileLink>
-              <MobileLink href="/bookmarks" icon={<Bookmark className="h-4 w-4" />}>Bookmarks</MobileLink>
+              <MobileLink href="/saved" icon={<Bookmark className="h-4 w-4" />}>Saved</MobileLink>
               <MobileLink href="/settings" icon={<Settings className="h-4 w-4" />}>Settings</MobileLink>
               <div className="my-2 border-t border-border" />
               <button

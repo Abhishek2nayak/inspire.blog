@@ -18,6 +18,7 @@ interface PostData {
   metaTitle?: string;
   tags?: { tag: { name: string } }[] | string[];
   published?: boolean;
+  status?: "DRAFT" | "REVIEW" | "PUBLISHED" | "ARCHIVED";
   author?: { id?: string; email?: string };
 }
 
@@ -37,7 +38,7 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
 
   useEffect(() => {
     if (status !== "authenticated") return;
-    fetch(`/api/posts/${id}`)
+    fetch(`/api/articles/${id}`)
       .then((r) => (r.ok ? r.json() : Promise.reject()))
       .then((data) => setPost(data.post || data))
       .catch(() => { toast({ title: "Post not found", variant: "destructive" }); router.push("/"); })
@@ -72,20 +73,21 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
     }
     setSaving(true);
     try {
-      const res = await fetch(`/api/posts/${id}`, {
+      const res = await fetch(`/api/articles/${id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           title: data.title,
           subtitle: data.subtitle || undefined,
           content: data.content,
-          contentMd: data.contentMd,
           coverImage: data.coverImage || undefined,
           tags: data.tags.length > 0 ? data.tags : undefined,
-          published: data.published,
+          // The API models publication as a ContentStatus enum, not a
+          // boolean. Without this mapping "Publish" silently saved a draft.
+          status: data.published ? "PUBLISHED" : "DRAFT",
           metaTitle: data.metaTitle || undefined,
           metaDesc: data.metaDesc || undefined,
-          canonicalUrl: data.canonicalUrl || undefined,
+          canonical: data.canonicalUrl || undefined,
         }),
       });
       const result = await res.json();
@@ -118,20 +120,20 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
   return (
     <>
       {/* Edit mode indicator */}
-      <div className="sticky top-14 z-40 border-b border-blue-200 bg-blue-50 px-4 py-2">
+      <div className="sticky top-14 z-40 border-b-2 border-ink bg-paper-cool px-4 py-2">
         <div className="mx-auto flex max-w-3xl items-center justify-between gap-2">
           <div className="flex items-center gap-2">
-            <span className="inline-flex items-center gap-1.5 rounded-full bg-blue-100 px-2.5 py-0.5 text-xs font-semibold text-blue-800">
-              <span className="h-1.5 w-1.5 rounded-full bg-blue-500 animate-pulse" />
+            <span className="inline-flex items-center gap-1.5 rounded-sm border border-ink bg-yellow px-2.5 py-0.5 text-xs font-semibold text-ink">
+              <span className="h-1.5 w-1.5 rounded-full bg-ink animate-pulse" />
               Editing
             </span>
-            <span className="truncate text-xs text-blue-700 max-w-xs">{post.title}</span>
+            <span className="truncate text-xs text-foreground max-w-xs">{post.title}</span>
           </div>
           <a
             href={post.slug ? `/article/${post.slug}` : undefined}
             target="_blank"
             rel="noopener noreferrer"
-            className="text-xs text-blue-600 hover:underline shrink-0"
+            className="text-xs text-link hover:underline shrink-0"
           >
             View published ↗
           </a>

@@ -9,7 +9,9 @@ const Card = React.forwardRef<
   <div
     ref={ref}
     className={cn(
-      "rounded-xl border bg-card text-card-foreground shadow",
+      // Flat by default: hairline border, no soft shadow. Use the `card-framed`
+      // utility for the ink-border + hard-offset treatment on key cards only.
+      "rounded-md border bg-card text-card-foreground",
       className
     )}
     {...props}

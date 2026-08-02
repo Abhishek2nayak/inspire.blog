@@ -4,18 +4,15 @@ declare module "next-auth" {
   interface Session {
     user: {
       id: string;
-      onboarded?: boolean;
+      /** Display-only. Server-side authorisation always re-reads the DB. */
+      role?: string;
     } & DefaultSession["user"];
-  }
-
-  interface User {
-    onboarded?: boolean;
   }
 }
 
 declare module "next-auth/jwt" {
   interface JWT {
     id: string;
-    onboarded?: boolean;
+    role?: string;
   }
 }

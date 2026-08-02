@@ -8,13 +8,16 @@ const badgeVariants = cva(
   {
     variants: {
       variant: {
-        default:
-          "border-transparent bg-primary text-primary-foreground shadow hover:bg-primary/80",
-        secondary:
-          "border-transparent bg-secondary text-secondary-foreground hover:bg-secondary/80",
+        // Spot colours are fills with ink text — never spot-as-text.
+        default: "border-transparent bg-primary text-primary-foreground",
+        secondary: "border-transparent bg-secondary text-secondary-foreground",
         destructive:
-          "border-transparent bg-destructive text-destructive-foreground shadow hover:bg-destructive/80",
-        outline: "text-foreground",
+          "border-transparent bg-destructive text-destructive-foreground",
+        outline: "border-border text-foreground",
+        /** Hairline chip on paper — the default for metadata rows. */
+        muted: "border-transparent bg-muted text-muted-foreground",
+        /** Ink chip, for the highest-emphasis label in a row. */
+        ink: "border-transparent bg-ink text-bone",
       },
     },
     defaultVariants: {

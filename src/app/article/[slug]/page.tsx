@@ -1,482 +1,294 @@
-import { notFound } from "next/navigation";
+import { cache } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import Script from "next/script";
-import { cache } from "react";
+import { notFound } from "next/navigation";
 import type { Metadata } from "next";
+import { Clock } from "lucide-react";
 import { prisma } from "@/lib/prisma";
-import { getCurrentUser } from "@/lib/session";
+import { articleDetailInclude, articleCardInclude, PUBLISHED } from "@/lib/queries";
+import { siteConfig, absoluteUrl } from "@/lib/site-config";
+import { stripHtml } from "@/lib/sanitize";
 import { formatDate } from "@/lib/utils";
-import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
 import ArticleContent from "@/components/article/ArticleContent";
-import ArticleActions from "@/components/article/ArticleActions";
-import CommentSection from "@/components/article/CommentSection";
+import StepRenderer from "@/components/article/StepRenderer";
 import ReadingProgressBar from "@/components/article/ReadingProgressBar";
-import TableOfContents from "@/components/article/TableOfContents";
-import ReactionBar from "@/components/article/ReactionBar";
-import FollowButton from "@/components/shared/FollowButton";
-import RelatedPosts from "@/components/article/RelatedPosts";
-import NewsletterSignup from "@/components/shared/NewsletterSignup";
 import SocialShare from "@/components/article/SocialShare";
-import { getInitials } from "@/lib/utils";
+import CommentSection from "@/components/article/CommentSection";
+import PromptCard from "@/components/prompt/PromptCard";
+import ToolCard from "@/components/tool/ToolCard";
+import ArticleCard from "@/components/article/ArticleCard";
+import AffiliateDisclosure from "@/components/tool/AffiliateDisclosure";
+import { CategoryChip, DifficultyBadge } from "@/components/prompt/Badges";
 
-interface ArticlePageProps {
-  params: Promise<{ slug: string }>;
-}
-
-const getPost = cache(async function getPost(slug: string) {
-  const post = await prisma.post.findUnique({
-    where: { slug, published: true },
-    include: {
-      author: {
-        select: {
-          id: true,
-          name: true,
-          image: true,
-          bio: true,
-          _count: {
-            select: { posts: true, followers: true },
-          },
-        },
-      },
-      tags: {
-        include: { tag: true },
-      },
-      comments: {
-        where: { parentId: null },
-        include: {
-          author: {
-            select: { id: true, name: true, image: true },
-          },
-          replies: {
-            include: {
-              author: {
-                select: { id: true, name: true, image: true },
-              },
-            },
-            orderBy: { createdAt: "asc" },
-          },
-        },
-        orderBy: { createdAt: "desc" },
-      },
-      likes: true,
-      bookmarks: true,
-      reactions: {
-        select: { emoji: true, userId: true },
-      },
-      _count: {
-        select: { likes: true, comments: true, bookmarks: true },
-      },
-    },
+const getArticle = cache(async (slug: string) => {
+  return prisma.article.findFirst({
+    where: { slug, ...PUBLISHED },
+    include: articleDetailInclude,
   });
-
-  return post;
 });
 
 export async function generateMetadata({
   params,
-}: ArticlePageProps): Promise<Metadata> {
+}: {
+  params: Promise<{ slug: string }>;
+}): Promise<Metadata> {
   const { slug } = await params;
-  const post = await getPost(slug);
+  const article = await getArticle(slug);
+  if (!article) return { title: "Article not found" };
 
-  if (!post) {
-    return { title: "Article Not Found | Inspire Blog" };
-  }
-
-  const baseUrl = "https://inspireblog.mythosh.com";
-  const articleTitle = post.metaTitle || post.title;
-  const title = `${articleTitle} | Inspire Blog`;
-  const rawDescription =
-    post.excerpt ||
-    `Read "${post.title}" by ${post.author.name} on Inspire.blog`;
-  const description = rawDescription.slice(0, 155);
-  const canonicalUrl = `${baseUrl}/article/${slug}`;
-  const ogImage = post.coverImage
-    ? post.coverImage.startsWith("http")
-      ? post.coverImage
-      : `${baseUrl}${post.coverImage}`
-    : `${baseUrl}/og-image.png`;
+  const url = absoluteUrl(`/article/${article.slug}`);
+  const description = (
+    article.metaDesc ||
+    article.excerpt ||
+    stripHtml(article.content)
+  ).slice(0, 155);
 
   return {
-    title,
+    title: article.metaTitle || article.title,
     description,
-    alternates: {
-      canonical: canonicalUrl,
-    },
-    robots: {
-      index: true,
-      follow: true,
-    },
+    alternates: { canonical: article.canonical || url },
     openGraph: {
-      title: articleTitle,
-      description,
-      url: canonicalUrl,
       type: "article",
-      publishedTime: post.createdAt.toISOString(),
-      modifiedTime: post.updatedAt.toISOString(),
-      authors: [post.author.name || ""],
-      images: [{ url: ogImage, alt: articleTitle }],
+      url,
+      title: article.title,
+      description,
+      publishedTime: article.publishedAt?.toISOString(),
+      modifiedTime: article.updatedAt.toISOString(),
+      ...(article.coverImage ? { images: [{ url: article.coverImage }] } : {}),
     },
     twitter: {
       card: "summary_large_image",
-      title: articleTitle,
+      title: article.title,
       description,
-      images: [ogImage],
+      ...(article.coverImage ? { images: [article.coverImage] } : {}),
     },
   };
 }
 
-export default async function ArticlePage({ params }: ArticlePageProps) {
+export default async function ArticlePage({
+  params,
+}: {
+  params: Promise<{ slug: string }>;
+}) {
   const { slug } = await params;
-  const post = await getPost(slug);
+  const article = await getArticle(slug);
+  if (!article) notFound();
 
-  if (!post) {
-    notFound();
-  }
-
-  // Increment views (fire and forget)
-  prisma.post
-    .update({
-      where: { id: post.id },
-      data: { views: { increment: 1 } },
-    })
+  // Not awaited: a view counter must never delay the response, and a failed
+  // increment is not worth surfacing.
+  prisma.article
+    .update({ where: { id: article.id }, data: { views: { increment: 1 } } })
     .catch(() => {});
 
-  const currentUser = await getCurrentUser();
-
-  const isLiked = currentUser
-    ? post.likes.some((like) => like.userId === currentUser.id)
-    : false;
-
-  const isBookmarked = currentUser
-    ? post.bookmarks.some((bm) => bm.userId === currentUser.id)
-    : false;
-
-  // Build reaction groups
-  const reactionMap = new Map<string, { count: number; reacted: boolean }>();
-  for (const reaction of post.reactions) {
-    const existing = reactionMap.get(reaction.emoji) || {
-      count: 0,
-      reacted: false,
-    };
-    reactionMap.set(reaction.emoji, {
-      count: existing.count + 1,
-      reacted: existing.reacted || reaction.userId === currentUser?.id,
-    });
-  }
-  const reactionGroups = Array.from(reactionMap.entries()).map(
-    ([emoji, data]) => ({ emoji, ...data }),
-  );
-
-  // Check if current user follows the author
-  let isFollowing = false;
-  if (currentUser && currentUser.id !== post.author.id) {
-    const follow = await prisma.follow.findUnique({
-      where: {
-        followerId_followingId: {
-          followerId: currentUser.id,
-          followingId: post.author.id,
-        },
-      },
-    });
-    isFollowing = !!follow;
-  }
-
-  const authorInitials = getInitials(post.author.name || "U");
-
-  const baseUrl =
-    process.env.NEXT_PUBLIC_APP_URL || "https://inspireblog.mythosh.com";
-  const articleUrl = `${baseUrl}/article/${post.slug}`;
-
-  const jsonLd = {
-    "@context": "https://schema.org",
-    "@type": "Article",
-    headline: post.metaTitle || post.title,
-    description: post.excerpt || "",
-    image: post.coverImage
-      ? post.coverImage.startsWith("http")
-        ? post.coverImage
-        : `${baseUrl}${post.coverImage}`
-      : `${baseUrl}/og-image.png`,
-    url: articleUrl,
-    mainEntityOfPage: articleUrl,
-    datePublished: post.createdAt.toISOString(),
-    dateModified: post.updatedAt.toISOString(),
-    author: {
-      "@type": "Person",
-      name: post.author.name || "Author",
-      url: `${baseUrl}/profile/${post.author.id}`,
-    },
-    publisher: {
-      "@type": "Organization",
-      name: "Inspire Blog",
-      logo: {
-        "@type": "ImageObject",
-        url: `${baseUrl}/og-image.png`,
+  const comments = await prisma.comment.findMany({
+    where: { articleId: article.id, hidden: false, parentId: null },
+    include: {
+      author: { select: { id: true, name: true, image: true } },
+      replies: {
+        where: { hidden: false },
+        include: { author: { select: { id: true, name: true, image: true } } },
+        orderBy: { createdAt: "asc" },
       },
     },
-  };
+    orderBy: { createdAt: "desc" },
+  });
 
-  const breadcrumbList = {
+  const related = await prisma.article.findMany({
+    where: {
+      ...PUBLISHED,
+      id: { not: article.id },
+      ...(article.categoryId ? { categoryId: article.categoryId } : {}),
+    },
+    include: articleCardInclude,
+    orderBy: { publishedAt: "desc" },
+    take: 3,
+  });
+
+  const url = absoluteUrl(`/article/${article.slug}`);
+  const description = (article.excerpt || stripHtml(article.content)).slice(0, 200);
+
+  const jsonLd: Record<string, unknown>[] = [
+    {
+      "@context": "https://schema.org",
+      "@type": "BlogPosting",
+      headline: article.title,
+      description,
+      url,
+      inLanguage: siteConfig.lang,
+      datePublished: article.publishedAt?.toISOString(),
+      dateModified: article.updatedAt.toISOString(),
+      ...(article.coverImage ? { image: article.coverImage } : {}),
+      author: { "@type": "Organization", name: siteConfig.name, url: siteConfig.url },
+      publisher: { "@type": "Organization", name: siteConfig.name, url: siteConfig.url },
+      mainEntityOfPage: { "@type": "WebPage", "@id": url },
+      keywords: article.tags.map((t) => t.tag.name).join(", "),
+    },
+  ];
+
+  // HowTo only when there are real steps to describe.
+  if (article.steps.length > 0) {
+    jsonLd.push({
+      "@context": "https://schema.org",
+      "@type": "HowTo",
+      name: article.title,
+      description,
+      ...(article.coverImage ? { image: article.coverImage } : {}),
+      step: article.steps.map((s, i) => ({
+        "@type": "HowToStep",
+        position: i + 1,
+        name: s.title,
+        text: stripHtml(s.body),
+        ...(s.image ? { image: s.image } : {}),
+      })),
+    });
+  }
+
+  jsonLd.push({
     "@context": "https://schema.org",
     "@type": "BreadcrumbList",
     itemListElement: [
-      {
-        "@type": "ListItem",
-        position: 1,
-        name: "Home",
-        item: baseUrl,
-      },
-      ...(post.tags.length > 0
-        ? [
-            {
-              "@type": "ListItem",
-              position: 2,
-              name: post.tags[0].tag.name,
-              item: `${baseUrl}/tag/${post.tags[0].tag.slug}`,
-            },
-            {
-              "@type": "ListItem",
-              position: 3,
-              name: post.metaTitle || post.title,
-              item: articleUrl,
-            },
-          ]
-        : [
-            {
-              "@type": "ListItem",
-              position: 2,
-              name: post.metaTitle || post.title,
-              item: articleUrl,
-            },
-          ]),
+      { "@type": "ListItem", position: 1, name: "Home", item: siteConfig.url },
+      { "@type": "ListItem", position: 2, name: "Tutorials", item: absoluteUrl("/tutorials") },
+      { "@type": "ListItem", position: 3, name: article.title, item: url },
     ],
-  };
+  });
 
   return (
     <>
-      <Script
-        id="article-schema"
+      <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
-      <Script
-        id="breadcrumb-schema"
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbList) }}
-      />
       <ReadingProgressBar />
 
-      <main className="min-h-screen bg-background">
-        {/* Hero / Cover image */}
-        {post.coverImage && (
-          <div className="relative w-full aspect-[21/9] max-h-[480px] overflow-hidden">
-            <div className="absolute inset-0 bg-gradient-to-b from-black/30 to-transparent z-10" />
+      <article className="mx-auto max-w-3xl px-4 py-8 sm:py-12">
+        <nav aria-label="Breadcrumb" className="mb-6 text-xs text-muted-foreground">
+          <Link href="/tutorials" className="hover:text-foreground hover:underline">
+            Tutorials
+          </Link>
+          {article.category && (
+            <>
+              <span className="mx-1.5">/</span>
+              <Link
+                href={`/category/${article.category.slug}`}
+                className="hover:text-foreground hover:underline"
+              >
+                {article.category.name}
+              </Link>
+            </>
+          )}
+        </nav>
+
+        <header className="mb-8">
+          <div className="mb-3 flex flex-wrap items-center gap-1.5">
+            {article.category && (
+              <CategoryChip name={article.category.name} chip={article.category.chip} />
+            )}
+            <DifficultyBadge value={article.difficulty} />
+          </div>
+
+          <h1 className="font-display text-3xl font-bold leading-tight tracking-tight text-foreground sm:text-4xl">
+            {article.title}
+          </h1>
+
+          {article.subtitle && (
+            <p className="mt-3 text-lg leading-relaxed text-muted-foreground">
+              {article.subtitle}
+            </p>
+          )}
+
+          <div className="mt-4 flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
+            {article.publishedAt && <span>{formatDate(article.publishedAt)}</span>}
+            <span className="inline-flex items-center gap-1">
+              <Clock className="h-3 w-3" />
+              {article.readTime} min read
+            </span>
+          </div>
+        </header>
+
+        {article.coverImage && (
+          <div className="relative mb-8 aspect-video overflow-hidden rounded-md border-2 border-ink">
             <Image
-              src={post.coverImage}
-              alt={post.title}
+              src={article.coverImage}
+              alt={article.coverAlt || ""}
               fill
+              sizes="(max-width: 768px) 100vw, 768px"
               priority
               className="object-cover"
-              sizes="100vw"
             />
           </div>
         )}
 
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-10">
-          <div className="flex gap-12">
-            {/* Main content column */}
-            <div className="flex-1 min-w-0 max-w-3xl mx-auto xl:mx-0">
-              <article>
-                {/* Tags at top */}
-                {post.tags.length > 0 && (
-                  <div className="flex flex-wrap gap-2 mb-4">
-                    {post.tags.map(({ tag }) => (
-                      <Link key={tag.id} href={`/tag/${tag.slug}`}>
-                        <Badge
-                          variant="secondary"
-                          className="hover:bg-secondary/80 cursor-pointer"
-                        >
-                          {tag.name}
-                        </Badge>
-                      </Link>
-                    ))}
-                  </div>
-                )}
+        {article.tools.length > 0 && <AffiliateDisclosure className="mb-6" />}
 
-                {/* Title */}
-                <h1 className="text-4xl sm:text-5xl font-serif font-bold text-foreground leading-tight tracking-tight mb-4">
-                  {post.title}
-                </h1>
+        <ArticleContent content={article.content} />
 
-                {/* Subtitle / Excerpt */}
-                {post.excerpt && (
-                  <p className="text-xl text-muted-foreground italic leading-relaxed mb-6">
-                    {post.excerpt}
-                  </p>
-                )}
+        {article.steps.length > 0 && (
+          <section className="mt-10">
+            <StepRenderer steps={article.steps} />
+          </section>
+        )}
 
-                {/* Author card */}
-                <div className="flex items-center justify-between mb-8 pb-6 border-b border-border">
-                  <div className="flex items-center gap-4">
-                    <Link
-                      href={`/profile/${post.author.id}`}
-                      className="shrink-0"
-                    >
-                      <Avatar className="h-12 w-12">
-                        <AvatarImage
-                          src={post.author.image || undefined}
-                          alt={post.author.name || ""}
-                        />
-                        <AvatarFallback>{authorInitials}</AvatarFallback>
-                      </Avatar>
-                    </Link>
-                    <div>
-                      <div className="flex items-center gap-3 flex-wrap">
-                        <Link
-                          href={`/profile/${post.author.id}`}
-                          className="font-semibold text-foreground hover:underline"
-                        >
-                          {post.author.name}
-                        </Link>
-                        <FollowButton
-                          userId={post.author.id}
-                          initialFollowing={isFollowing}
-                        />
-                      </div>
-                      {post.author.bio && (
-                        <p className="text-sm text-muted-foreground mt-0.5 line-clamp-1 max-w-xs">
-                          {post.author.bio}
-                        </p>
-                      )}
-                      <div className="flex items-center gap-2 text-sm text-muted-foreground mt-1">
-                        <span>{post.readTime} min read</span>
-                        <span>&middot;</span>
-                        <span>{formatDate(post.createdAt)}</span>
-                        {post._count.comments > 0 && (
-                          <>
-                            <span>&middot;</span>
-                            <span>{post._count.comments} comments</span>
-                          </>
-                        )}
-                      </div>
-                    </div>
-                  </div>
+        {article.prompts.length > 0 && (
+          <section className="mt-12 border-t border-border pt-8">
+            <h2 className="mb-4 font-display text-xl font-bold text-foreground">
+              Prompts used here
+            </h2>
+            <div className="grid gap-5 sm:grid-cols-2">
+              {article.prompts.map(({ prompt, note }) => (
+                <div key={prompt.id}>
+                  <PromptCard prompt={prompt} />
+                  {note && <p className="mt-1.5 text-xs text-muted-foreground">{note}</p>}
                 </div>
-
-                {/* Article content */}
-                <ArticleContent content={post.content} />
-
-                <Separator className="my-10" />
-
-                {/* Reactions */}
-                <ReactionBar
-                  postId={post.id}
-                  initialReactions={reactionGroups}
-                />
-
-                <Separator className="my-6" />
-
-                {/* Actions (mobile) */}
-                <ArticleActions
-                  postId={post.id}
-                  initialLikes={post._count.likes}
-                  initialBookmarked={isBookmarked}
-                  initialLiked={isLiked}
-                  commentCount={post._count.comments}
-                />
-
-                <Separator className="my-8" />
-
-                {/* Author bio card */}
-                <div className="bg-muted/50 rounded-2xl p-6 flex gap-5 items-start">
-                  <Link
-                    href={`/profile/${post.author.id}`}
-                    className="shrink-0"
-                  >
-                    <Avatar className="h-16 w-16">
-                      <AvatarImage
-                        src={post.author.image || undefined}
-                        alt={post.author.name || ""}
-                      />
-                      <AvatarFallback className="text-lg">
-                        {authorInitials}
-                      </AvatarFallback>
-                    </Avatar>
-                  </Link>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-start justify-between gap-2 flex-wrap">
-                      <div>
-                        <Link
-                          href={`/profile/${post.author.id}`}
-                          className="font-bold text-foreground hover:underline text-lg"
-                        >
-                          {post.author.name}
-                        </Link>
-                        {"_count" in post.author && (
-                          <p className="text-xs text-muted-foreground mt-0.5">
-                            {
-                              (
-                                post.author as typeof post.author & {
-                                  _count: { posts: number };
-                                }
-                              )._count.posts
-                            }{" "}
-                            posts
-                          </p>
-                        )}
-                      </div>
-                      <FollowButton
-                        userId={post.author.id}
-                        initialFollowing={isFollowing}
-                      />
-                    </div>
-                    {post.author.bio && (
-                      <p className="text-sm text-muted-foreground mt-2 leading-relaxed">
-                        {post.author.bio}
-                      </p>
-                    )}
-                  </div>
-                </div>
-
-                <Separator className="my-8" />
-
-                {/* Social Share */}
-                <SocialShare url={articleUrl} title={post.title} />
-
-                {/* Related Posts */}
-                <RelatedPosts
-                  postId={post.id}
-                  tagIds={post.tags.map((t) => t.tagId)}
-                  authorId={post.author.id}
-                />
-
-                <Separator className="my-8" />
-
-                {/* Comments */}
-                <CommentSection
-                  postId={post.id}
-                  initialComments={post.comments}
-                />
-              </article>
+              ))}
             </div>
+          </section>
+        )}
 
-            {/* Sidebar: TOC + Newsletter CTA */}
-            <aside className="hidden xl:block w-56 shrink-0">
-              <div className="sticky top-20 space-y-6">
-                <TableOfContents content={post.content} />
-                {/* <NewsletterSignup
-                  variant="sidebar"
-                  title="Enjoyed this?"
-                  description="Get more articles like this in your inbox every week."
-                /> */}
-              </div>
-            </aside>
+        {article.tools.length > 0 && (
+          <section className="mt-12 border-t border-border pt-8">
+            <h2 className="mb-4 font-display text-xl font-bold text-foreground">
+              Tools mentioned
+            </h2>
+            <div className="grid gap-5 sm:grid-cols-2">
+              {article.tools.map(({ tool }) => (
+                <ToolCard key={tool.id} tool={tool} />
+              ))}
+            </div>
+          </section>
+        )}
+
+        {article.tags.length > 0 && (
+          <div className="mt-10 flex flex-wrap gap-1.5">
+            {article.tags.map(({ tag }) => (
+              <Link
+                key={tag.id}
+                href={`/tag/${tag.slug}`}
+                className="rounded-sm border border-border px-2 py-0.5 text-xs text-muted-foreground hover:border-ink hover:text-foreground"
+              >
+                #{tag.name}
+              </Link>
+            ))}
           </div>
+        )}
+
+        <div className="mt-8 border-t border-border pt-6">
+          <SocialShare url={url} title={article.title} />
         </div>
-      </main>
+
+        <CommentSection articleId={article.id} initialComments={comments} />
+
+        {related.length > 0 && (
+          <section className="mt-12 border-t border-border pt-8">
+            <h2 className="mb-4 font-display text-xl font-bold text-foreground">Read next</h2>
+            <div className="space-y-4">
+              {related.map((a) => (
+                <ArticleCard key={a.id} article={a} />
+              ))}
+            </div>
+          </section>
+        )}
+      </article>
     </>
   );
 }

@@ -1,138 +1,91 @@
 import React from "react";
 import Link from "next/link";
-import { Twitter, Github, Linkedin } from "lucide-react";
-import { Separator } from "@/components/ui/separator";
-import { Button } from "@/components/ui/button";
 import Logo from "@/components/shared/Logo";
+import { siteConfig, activeSocials } from "@/lib/site-config";
+import { OUTPUT_TYPES } from "@/lib/prompts";
+import { CLUSTERS } from "@/lib/categories";
 
 const FOOTER_LINKS = {
-  discover: [
-    { label: "Home", href: "/" },
-    { label: "Feed", href: "/feed" },
-    { label: "Search", href: "/search" },
+  explore: [
+    { label: "Prompts", href: "/prompts" },
+    { label: "Tools", href: "/tools" },
+    { label: "Tutorials", href: "/tutorials" },
+    { label: "Topics", href: "/categories" },
     { label: "Tags", href: "/tags" },
-    { label: "Series", href: "/series" },
-  ],
-  write: [
-    { label: "New Post", href: "/editor/new" },
-    { label: "Dashboard", href: "/dashboard" },
-    { label: "Editor Guide", href: "/editor-guide" },
   ],
   company: [
     { label: "About", href: "/about" },
+    { label: "Contact", href: "/contact" },
+    { label: "FAQ", href: "/faq" },
     { label: "Privacy", href: "/privacy" },
     { label: "Terms", href: "/terms" },
-    { label: "Contact", href: "/contact" },
   ],
 };
 
-const SOCIAL_LINKS = [
-  {
-    label: "Twitter",
-    href: "https://twitter.com",
-    icon: Twitter,
-  },
-  {
-    label: "GitHub",
-    href: "https://github.com",
-    icon: Github,
-  },
-  {
-    label: "LinkedIn",
-    href: "https://linkedin.com",
-    icon: Linkedin,
-  },
-];
-
 const Footer: React.FC = () => {
+  // Only render social links that actually exist — the previous footer linked
+  // to twitter.com/github.com homepages, which is worse than no link at all.
+  const socials = activeSocials();
+
   return (
-    <footer className="border-t border-border bg-background">
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        {/* Main grid */}
-        <div className="grid grid-cols-1 gap-8 py-12 sm:grid-cols-2 lg:grid-cols-4">
-          {/* Brand column */}
-          <div className="sm:col-span-2 lg:col-span-1">
-            <Logo size="md" />
+    <footer className="border-t-2 border-ink bg-paper-warm">
+      <div className="mx-auto max-w-6xl px-4 py-12 sm:px-6">
+        <div className="grid gap-10 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="lg:col-span-1">
+            <Logo size="sm" />
             <p className="mt-3 max-w-xs text-sm leading-relaxed text-muted-foreground">
-              Where ideas ignite. Discover insightful articles on technology,
-              programming, design, and more — or share your own.
+              {siteConfig.description}
             </p>
-            {/* Social icons */}
-            <div className="mt-5 flex items-center gap-2">
-              {SOCIAL_LINKS.map(({ label, href, icon: Icon }) => (
-                <a
-                  key={label}
-                  href={href}
-                  target="_blank"
-                  rel="noopener noreferrer nofollow"
-                  aria-label={label}
-                >
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-8 w-8 text-muted-foreground hover:text-foreground"
-                    asChild
-                  >
-                    <span>
-                      <Icon className="h-4 w-4" />
-                    </span>
-                  </Button>
-                </a>
-              ))}
-            </div>
           </div>
 
-          {/* Discover */}
           <div>
-            <h3 className="mb-4 text-sm font-semibold text-foreground">
-              Discover
-            </h3>
-            <ul className="space-y-2.5">
-              {FOOTER_LINKS.discover.map((link) => (
-                <li key={link.href}>
+            <h2 className="mb-3 text-xs font-semibold uppercase tracking-wider text-foreground">
+              Explore
+            </h2>
+            <ul className="space-y-2">
+              {FOOTER_LINKS.explore.map((l) => (
+                <li key={l.href}>
                   <Link
-                    href={link.href}
+                    href={l.href}
                     className="text-sm text-muted-foreground transition-colors hover:text-foreground"
                   >
-                    {link.label}
+                    {l.label}
                   </Link>
                 </li>
               ))}
             </ul>
           </div>
 
-          {/* Write */}
           <div>
-            <h3 className="mb-4 text-sm font-semibold text-foreground">
-              Write
-            </h3>
-            <ul className="space-y-2.5">
-              {FOOTER_LINKS.write.map((link) => (
-                <li key={link.href}>
+            <h2 className="mb-3 text-xs font-semibold uppercase tracking-wider text-foreground">
+              Popular
+            </h2>
+            <ul className="space-y-2">
+              {OUTPUT_TYPES.slice(0, 5).map((o) => (
+                <li key={o.slug}>
                   <Link
-                    href={link.href}
+                    href={`/prompts/for/${o.slug}`}
                     className="text-sm text-muted-foreground transition-colors hover:text-foreground"
                   >
-                    {link.label}
+                    {o.name}
                   </Link>
                 </li>
               ))}
             </ul>
           </div>
 
-          {/* Company */}
           <div>
-            <h3 className="mb-4 text-sm font-semibold text-foreground">
+            <h2 className="mb-3 text-xs font-semibold uppercase tracking-wider text-foreground">
               Company
-            </h3>
-            <ul className="space-y-2.5">
-              {FOOTER_LINKS.company.map((link) => (
-                <li key={link.href}>
+            </h2>
+            <ul className="space-y-2">
+              {FOOTER_LINKS.company.map((l) => (
+                <li key={l.href}>
                   <Link
-                    href={link.href}
+                    href={l.href}
                     className="text-sm text-muted-foreground transition-colors hover:text-foreground"
                   >
-                    {link.label}
+                    {l.label}
                   </Link>
                 </li>
               ))}
@@ -140,22 +93,39 @@ const Footer: React.FC = () => {
           </div>
         </div>
 
-        <Separator />
-
-        {/* Bottom row */}
-        <div className="flex flex-col items-center justify-between gap-3 py-5 sm:flex-row">
-          <p className="text-xs text-muted-foreground">
-            &copy; {new Date().getFullYear()} Inspire.blog. All rights reserved.
-          </p>
-          <div className="flex items-center gap-4 text-xs text-muted-foreground">
-            <span>Built with care by the Inspire.blog team</span>
-            <a
-              href="/contact"
-              className="underline underline-offset-2 hover:text-foreground transition-colors"
+        <div className="mt-10 flex flex-wrap gap-2 border-t border-rule-strong pt-6">
+          {CLUSTERS.map((c) => (
+            <Link
+              key={c.slug}
+              href={`/category/${c.slug}`}
+              className="rounded-sm border border-rule-strong px-2.5 py-1 text-xs text-muted-foreground transition-colors hover:border-ink hover:text-foreground"
             >
-              Advertise with us
-            </a>
-          </div>
+              {c.name}
+            </Link>
+          ))}
+        </div>
+
+        <div className="mt-6 flex flex-col items-start justify-between gap-3 border-t border-rule-strong pt-6 sm:flex-row sm:items-center">
+          <p className="text-xs text-muted-foreground">
+            &copy; {new Date().getFullYear()} {siteConfig.name}. All rights reserved.
+          </p>
+
+          {socials.length > 0 && (
+            <ul className="flex items-center gap-3">
+              {socials.map((s) => (
+                <li key={s.key}>
+                  <a
+                    href={s.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-xs text-muted-foreground transition-colors hover:text-foreground"
+                  >
+                    {s.key === "x" ? "X" : s.key.charAt(0).toUpperCase() + s.key.slice(1)}
+                  </a>
+                </li>
+              ))}
+            </ul>
+          )}
         </div>
       </div>
     </footer>

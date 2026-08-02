@@ -1,10 +1,9 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   Dialog,
@@ -15,81 +14,81 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
-import { formatDate } from "@/lib/utils";
-import { cn } from "@/lib/utils";
-import {
-  Edit,
-  Trash2,
-  Eye,
-  Heart,
-  MessageCircle,
-  PenLine,
-  FileText,
-  Plus,
-} from "lucide-react";
+import { formatDate, cn } from "@/lib/utils";
+import { Edit, Trash2, Eye, MessageCircle, PenLine, FileText, Plus } from "lucide-react";
 
-type PostStatus = "all" | "published" | "draft";
+type Tab = "all" | "published" | "draft";
 
-interface DashboardPost {
+/** Mirrors what GET /api/articles actually returns (articleCardInclude). */
+interface DashboardArticle {
   id: string;
   title: string;
   slug: string;
-  published: boolean;
+  status: "DRAFT" | "REVIEW" | "PUBLISHED" | "ARCHIVED";
   createdAt: string;
   views: number;
-  _count: {
-    likes: number;
-    comments: number;
-  };
+  _count: { comments: number; bookmarks: number };
 }
 
-const tabs: { key: PostStatus; label: string }[] = [
-  { key: "all", label: "All Posts" },
+const tabs: { key: Tab; label: string }[] = [
+  { key: "all", label: "All" },
   { key: "published", label: "Published" },
   { key: "draft", label: "Drafts" },
 ];
 
+const STATUS_STYLE: Record<string, string> = {
+  PUBLISHED: "bg-chip-green text-chip-green-fg",
+  DRAFT: "bg-muted text-muted-foreground",
+  REVIEW: "bg-chip-yellow text-chip-yellow-fg",
+  ARCHIVED: "bg-muted text-muted-foreground",
+};
+
 export default function DashboardPostsPage() {
   const router = useRouter();
   const { toast } = useToast();
-  const [posts, setPosts] = useState<DashboardPost[]>([]);
+  const [articles, setArticles] = useState<DashboardArticle[]>([]);
   const [loading, setLoading] = useState(true);
-  const [filter, setFilter] = useState<PostStatus>("all");
+  const [filter, setFilter] = useState<Tab>("all");
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [deleting, setDeleting] = useState(false);
 
-  useEffect(() => {
-    fetchPosts();
-  }, []);
-
-  const fetchPosts = async () => {
+  const fetchArticles = useCallback(async () => {
     try {
-      const res = await fetch("/api/posts?mine=true&include_drafts=true");
+      const res = await fetch("/api/articles?mine=true&include_drafts=true");
       if (!res.ok) throw new Error();
       const data = await res.json();
-      setPosts(data.posts || data);
+
+      // The API returns { articles: [...] }. Guard with Array.isArray rather
+      // than `data.articles || data` — if the shape ever changes again, this
+      // renders an empty list instead of throwing "filter is not a function".
+      setArticles(Array.isArray(data?.articles) ? data.articles : []);
     } catch {
+      setArticles([]);
       toast({
-        title: "Failed to load posts",
+        title: "Failed to load articles",
         description: "Please refresh the page.",
         variant: "destructive",
       });
     } finally {
       setLoading(false);
     }
-  };
+  }, [toast]);
+
+  useEffect(() => {
+    fetchArticles();
+  }, [fetchArticles]);
 
   const handleDelete = async () => {
     if (!deleteId) return;
     setDeleting(true);
     try {
-      const res = await fetch(`/api/posts/${deleteId}`, { method: "DELETE" });
+      const res = await fetch(`/api/articles/${deleteId}`, { method: "DELETE" });
       if (!res.ok) throw new Error();
-      setPosts((prev) => prev.filter((p) => p.id !== deleteId));
-      toast({ title: "Post deleted" });
+      setArticles((prev) => prev.filter((p) => p.id !== deleteId));
+      toast({ title: "Article deleted" });
     } catch {
       toast({
-        title: "Failed to delete post",
+        title: "Failed to delete",
         description: "Please try again.",
         variant: "destructive",
       });
@@ -99,45 +98,43 @@ export default function DashboardPostsPage() {
     }
   };
 
-  const filteredPosts = posts.filter((post) => {
-    if (filter === "published") return post.published;
-    if (filter === "draft") return !post.published;
+  const isPublished = (a: DashboardArticle) => a.status === "PUBLISHED";
+
+  const filtered = articles.filter((a) => {
+    if (filter === "published") return isPublished(a);
+    if (filter === "draft") return !isPublished(a);
     return true;
   });
 
-  const postToDelete = posts.find((p) => p.id === deleteId);
+  const toDelete = articles.find((a) => a.id === deleteId);
 
   return (
     <>
       <div className="space-y-6">
-        {/* Header */}
         <div className="flex items-center justify-between">
           <div>
-            <h2 className="text-2xl font-serif font-bold text-foreground">
-              Your Posts
-            </h2>
-            <p className="text-sm text-muted-foreground mt-0.5">
-              Manage and track all your content
+            <h2 className="font-display text-2xl font-bold text-foreground">Articles</h2>
+            <p className="mt-0.5 text-sm text-muted-foreground">
+              Tutorials, guides and roundups
             </p>
           </div>
           <Link href="/editor/new">
-            <Button className="bg-foreground text-background hover:opacity-90 gap-1.5">
+            <Button variant="riso" className="gap-1.5">
               <Plus className="h-4 w-4" />
-              New Post
+              New article
             </Button>
           </Link>
         </div>
 
-        {/* Tab Filters */}
         <div className="flex items-center gap-1 border-b border-border">
           {tabs.map((tab) => (
             <button
               key={tab.key}
               onClick={() => setFilter(tab.key)}
               className={cn(
-                "px-4 py-2.5 text-sm font-medium transition-all border-b-2 cursor-pointer",
+                "cursor-pointer border-b-2 px-4 py-2.5 text-sm font-medium transition-all",
                 filter === tab.key
-                  ? "border-foreground text-foreground"
+                  ? "border-ink text-foreground"
                   : "border-transparent text-muted-foreground hover:text-foreground"
               )}
             >
@@ -145,136 +142,109 @@ export default function DashboardPostsPage() {
               {!loading && (
                 <span
                   className={cn(
-                    "ml-2 px-1.5 py-0.5 text-xs rounded-full",
-                    filter === tab.key
-                      ? "bg-foreground text-background"
-                      : "bg-muted text-muted-foreground"
+                    "ml-2 rounded-sm px-1.5 py-0.5 text-xs",
+                    filter === tab.key ? "bg-ink text-bone" : "bg-muted text-muted-foreground"
                   )}
                 >
                   {tab.key === "all"
-                    ? posts.length
+                    ? articles.length
                     : tab.key === "published"
-                      ? posts.filter((p) => p.published).length
-                      : posts.filter((p) => !p.published).length}
+                      ? articles.filter(isPublished).length
+                      : articles.filter((a) => !isPublished(a)).length}
                 </span>
               )}
             </button>
           ))}
         </div>
 
-        {/* Loading State */}
         {loading && (
           <div className="space-y-3">
-            {[...Array(5)].map((_, i) => (
+            {[...Array(4)].map((_, i) => (
               <div
                 key={i}
-                className="flex items-center justify-between p-4 border border-border rounded-xl"
+                className="flex items-center justify-between rounded-md border border-border p-4"
               >
-                <div className="flex-1 space-y-2 mr-4">
+                <div className="mr-4 flex-1 space-y-2">
                   <Skeleton className="h-4 w-2/3" />
                   <div className="flex gap-3">
                     <Skeleton className="h-3 w-16" />
                     <Skeleton className="h-3 w-12" />
-                    <Skeleton className="h-3 w-12" />
                   </div>
                 </div>
-                <div className="flex gap-2">
-                  <Skeleton className="h-8 w-8 rounded-lg" />
-                  <Skeleton className="h-8 w-8 rounded-lg" />
-                </div>
+                <Skeleton className="h-8 w-8 rounded-md" />
               </div>
             ))}
           </div>
         )}
 
-        {/* Empty State */}
-        {!loading && filteredPosts.length === 0 && (
-          <div className="text-center py-16 bg-muted/20 rounded-2xl border border-border">
-            <div className="w-14 h-14 bg-background border border-border rounded-2xl flex items-center justify-center mx-auto mb-4">
+        {!loading && filtered.length === 0 && (
+          <div className="rounded-md border border-border bg-muted/30 py-16 text-center">
+            <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-md border-2 border-ink bg-card">
               <FileText className="h-6 w-6 text-muted-foreground" />
             </div>
-            <h3 className="font-serif font-semibold text-foreground mb-1">
+            <h3 className="mb-1 font-display font-bold text-foreground">
               {filter === "draft"
                 ? "No drafts"
                 : filter === "published"
-                  ? "No published posts"
-                  : "No posts yet"}
+                  ? "Nothing published"
+                  : "No articles yet"}
             </h3>
-            <p className="text-sm text-muted-foreground mb-5">
-              {filter === "draft"
-                ? "Start writing and save as draft."
-                : filter === "published"
-                  ? "Publish your first post to see it here."
-                  : "Create your first post and share your ideas."}
-            </p>
             <Link href="/editor/new">
-              <Button variant="outline">
-                <PenLine className="h-4 w-4 mr-1.5" />
-                Write a post
+              <Button variant="outline" className="mt-3">
+                <PenLine className="mr-1.5 h-4 w-4" />
+                Write one
               </Button>
             </Link>
           </div>
         )}
 
-        {/* Posts List */}
-        {!loading && filteredPosts.length > 0 && (
+        {!loading && filtered.length > 0 && (
           <div className="space-y-2.5">
-            {filteredPosts.map((post) => (
+            {filtered.map((a) => (
               <div
-                key={post.id}
-                className="flex items-center justify-between p-4 bg-background border border-border rounded-xl hover:border-foreground/30 hover:shadow-sm transition-all group"
+                key={a.id}
+                className="group flex items-center justify-between rounded-md border border-border bg-card p-4 transition-colors hover:border-ink"
               >
-                <div className="flex-1 min-w-0 mr-4">
-                  <div className="flex items-center gap-2.5 mb-1.5">
+                <div className="mr-4 min-w-0 flex-1">
+                  <div className="mb-1.5 flex items-center gap-2.5">
                     <Link
-                      href={
-                        post.published
-                          ? `/article/${post.slug}`
-                          : `/editor/${post.id}`
-                      }
-                      className="font-medium text-foreground hover:opacity-70 transition-opacity truncate text-sm"
+                      href={isPublished(a) ? `/article/${a.slug}` : `/editor/${a.id}`}
+                      className="truncate text-sm font-medium text-foreground hover:underline"
                     >
-                      {post.title || "Untitled Draft"}
+                      {a.title || "Untitled draft"}
                     </Link>
-                    <Badge
-                      variant={post.published ? "default" : "secondary"}
+                    <span
                       className={cn(
-                        "flex-shrink-0 text-xs",
-                        post.published
-                          ? "bg-foreground text-background"
-                          : "bg-muted text-muted-foreground"
+                        "flex-shrink-0 rounded-sm px-1.5 py-0.5 text-[11px] font-semibold",
+                        STATUS_STYLE[a.status]
                       )}
                     >
-                      {post.published ? "Published" : "Draft"}
-                    </Badge>
+                      {a.status.toLowerCase()}
+                    </span>
                   </div>
                   <div className="flex items-center gap-4 text-xs text-muted-foreground">
-                    <span>{formatDate(post.createdAt)}</span>
-                    {post.published && (
+                    <span>{formatDate(a.createdAt)}</span>
+                    {isPublished(a) && (
                       <>
                         <span className="flex items-center gap-1">
                           <Eye className="h-3 w-3" />
-                          {post.views.toLocaleString()}
-                        </span>
-                        <span className="flex items-center gap-1">
-                          <Heart className="h-3 w-3" />
-                          {post._count.likes}
+                          {a.views.toLocaleString()}
                         </span>
                         <span className="flex items-center gap-1">
                           <MessageCircle className="h-3 w-3" />
-                          {post._count.comments}
+                          {a._count?.comments ?? 0}
                         </span>
                       </>
                     )}
                   </div>
                 </div>
 
-                <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                <div className="flex items-center gap-1 opacity-0 transition-opacity group-hover:opacity-100">
                   <Button
                     variant="ghost"
                     size="icon"
-                    onClick={() => router.push(`/editor/${post.id}`)}
-                    className="h-8 w-8 text-muted-foreground hover:text-foreground hover:bg-muted"
+                    onClick={() => router.push(`/editor/${a.id}`)}
+                    className="h-8 w-8"
                     aria-label="Edit"
                   >
                     <Edit className="h-3.5 w-3.5" />
@@ -282,8 +252,8 @@ export default function DashboardPostsPage() {
                   <Button
                     variant="ghost"
                     size="icon"
-                    onClick={() => setDeleteId(post.id)}
-                    className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                    onClick={() => setDeleteId(a.id)}
+                    className="h-8 w-8 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
                     aria-label="Delete"
                   >
                     <Trash2 className="h-3.5 w-3.5" />
@@ -295,31 +265,20 @@ export default function DashboardPostsPage() {
         )}
       </div>
 
-      {/* Delete Confirmation Dialog */}
       <Dialog open={!!deleteId} onOpenChange={(open) => !open && setDeleteId(null)}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Delete post</DialogTitle>
+            <DialogTitle>Delete article</DialogTitle>
             <DialogDescription>
-              Are you sure you want to delete &quot;
-              {postToDelete?.title || "this post"}&quot;? This action cannot be
-              undone.
+              Delete &quot;{toDelete?.title || "this article"}&quot;? This cannot be undone.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter className="gap-2">
-            <Button
-              variant="outline"
-              onClick={() => setDeleteId(null)}
-              disabled={deleting}
-            >
+            <Button variant="outline" onClick={() => setDeleteId(null)} disabled={deleting}>
               Cancel
             </Button>
-            <Button
-              variant="destructive"
-              onClick={handleDelete}
-              disabled={deleting}
-            >
-              {deleting ? "Deleting..." : "Delete"}
+            <Button variant="destructive" onClick={handleDelete} disabled={deleting}>
+              {deleting ? "Deleting…" : "Delete"}
             </Button>
           </DialogFooter>
         </DialogContent>

@@ -2,8 +2,8 @@ import { Metadata } from "next";
 import Link from "next/link";
 
 export const metadata: Metadata = {
-  title: "Terms of Service | Inspire Blog",
-  description: "Terms of Service and Usage Guidelines for Inspire Blog.",
+  title: "Terms of Service | Makeframe",
+  description: "Terms of Service and Usage Guidelines for Makeframe.",
 };
 
 export default function TermsOfServicePage() {
@@ -23,7 +23,7 @@ export default function TermsOfServicePage() {
               1. Acceptance of Terms
             </h2>
             <p>
-              By accessing or using Inspire Blog ("we," "our," or "us"), you
+              By accessing or using Makeframe ("we," "our," or "us"), you
               agree to be bound by these Terms of Service. If you do not agree
               with any part of these terms, you must not use our platform. These
               terms govern your access to and use of our website, services, and
@@ -62,7 +62,7 @@ export default function TermsOfServicePage() {
               3. User-Generated Content
             </h2>
             <p>
-              Inspire Blog allows users to publish articles, comments, and other
+              Makeframe allows users to publish articles, comments, and other
               content ("User Content").
             </p>
             <ul className="list-disc pl-6 space-y-3 mt-4">
@@ -74,7 +74,7 @@ export default function TermsOfServicePage() {
               </li>
               <li>
                 <strong className="text-foreground">License:</strong> By posting
-                content, you grant Inspire Blog a worldwide, non-exclusive,
+                content, you grant Makeframe a worldwide, non-exclusive,
                 royalty-free license to use, reproduce, modify, adapt, publish,
                 translate, and distribute your content in connection with
                 operating and promoting the platform.
@@ -94,9 +94,9 @@ export default function TermsOfServicePage() {
               4. Intellectual Property
             </h2>
             <p>
-              The Inspire Blog platform itself, including its original content,
+              The Makeframe platform itself, including its original content,
               features, and functionality (excluding User Content), is owned by
-              Inspire Blog and is protected by international copyright,
+              Makeframe and is protected by international copyright,
               trademark, patent, trade secret, and other intellectual property
               or proprietary rights laws.
             </p>
@@ -120,7 +120,7 @@ export default function TermsOfServicePage() {
               6. Limitation of Liability
             </h2>
             <p>
-              In no event shall Inspire Blog, nor its directors, employees,
+              In no event shall Makeframe, nor its directors, employees,
               partners, agents, suppliers, or affiliates, be liable for any
               indirect, incidental, special, consequential, or punitive damages,
               including without limitation, loss of profits, data, use,
@@ -135,7 +135,7 @@ export default function TermsOfServicePage() {
             </h2>
             <p>
               Our platform may contain links to third-party websites or services
-              that are not owned or controlled by Inspire Blog. We have no
+              that are not owned or controlled by Makeframe. We have no
               control over, and assume no responsibility for, the content,
               privacy policies, or practices of any third-party websites or
               services.

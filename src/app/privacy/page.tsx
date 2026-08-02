@@ -2,8 +2,8 @@ import { Metadata } from "next";
 import Link from "next/link";
 
 export const metadata: Metadata = {
-  title: "Privacy Policy | Inspire Blog",
-  description: "Privacy Policy and GDPR compliance information for Inspire Blog.",
+  title: "Privacy Policy | Makeframe",
+  description: "Privacy Policy and GDPR compliance information for Makeframe.",
 };
 
 export default function PrivacyPolicyPage() {
@@ -19,10 +19,10 @@ export default function PrivacyPolicyPage() {
           <section>
             <h2 className="text-2xl font-bold text-foreground mb-4">1. Introduction</h2>
             <p>
-              Welcome to Inspire Blog ("we," "our," or "us"). We are committed to protecting your personal data and respecting your privacy. This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you visit our website (inspireblog.mythosh.com) and use our platform.
+              Welcome to Makeframe ("we," "our," or "us"). We are committed to protecting your personal data and respecting your privacy. This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you visit our website and use our platform.
             </p>
             <p className="mt-4">
-              This policy is designed to comply with the General Data Protection Regulation (GDPR) and other applicable privacy laws. By using Inspire Blog, you agree to the collection and use of information in accordance with this policy.
+              This policy is designed to comply with the General Data Protection Regulation (GDPR) and other applicable privacy laws. By using Makeframe, you agree to the collection and use of information in accordance with this policy.
             </p>
           </section>
 

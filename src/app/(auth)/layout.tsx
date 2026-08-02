@@ -4,8 +4,8 @@ import Logo from "@/components/shared/Logo";
 function StatPill({ value, label }: { value: string; label: string }) {
   return (
     <div className="flex flex-col items-center bg-white/40 border border-white/50 rounded-xl px-4 py-2.5">
-      <span className="text-lg font-bold text-[#1a2e28]">{value}</span>
-      <span className="text-[11px] text-[#4a7265] mt-0.5">{label}</span>
+      <span className="text-lg font-bold text-[var(--ink)]">{value}</span>
+      <span className="text-[11px] text-[var(--ink-soft)] mt-0.5">{label}</span>
     </div>
   );
 }
@@ -20,7 +20,7 @@ export default function AuthLayout({
       {/* ── Left panel — sage green, full height ── */}
       <div
         className="hidden md:flex md:w-[45%] min-h-screen flex-col justify-between p-12 lg:p-16 relative overflow-hidden"
-        style={{ backgroundColor: "#b8deca" }}
+        style={{ backgroundColor: "var(--paper-warm)" }}
       >
         {/* Decorative circles */}
         <div className="absolute top-[-80px] right-[-80px] w-72 h-72 rounded-full bg-white/20 pointer-events-none" />
@@ -42,7 +42,7 @@ export default function AuthLayout({
                 width="170"
                 height="9"
                 rx="4.5"
-                fill="#2d7d59"
+                fill="var(--green-text)"
                 opacity="0.35"
               />
               <rect
@@ -51,7 +51,7 @@ export default function AuthLayout({
                 width="6"
                 height="20"
                 rx="3"
-                fill="#2d7d59"
+                fill="var(--green-text)"
                 opacity="0.3"
               />
               <rect
@@ -60,7 +60,7 @@ export default function AuthLayout({
                 width="6"
                 height="20"
                 rx="3"
-                fill="#2d7d59"
+                fill="var(--green-text)"
                 opacity="0.3"
               />
               <ellipse
@@ -68,30 +68,30 @@ export default function AuthLayout({
                 cy="105"
                 rx="24"
                 ry="30"
-                fill="#2d7d59"
+                fill="var(--green-text)"
                 opacity="0.55"
               />
               <circle
                 cx="110"
                 cy="66"
                 r="20"
-                fill="#a8d5c2"
-                stroke="#2d7d59"
+                fill="var(--rule-strong)"
+                stroke="var(--green-text)"
                 strokeWidth="2.5"
                 opacity="0.95"
               />
               <path
                 d="M90 61 Q110 46 130 61"
-                stroke="#1a2e28"
+                stroke="var(--ink)"
                 strokeWidth="3.5"
                 strokeLinecap="round"
                 fill="none"
               />
-              <circle cx="104" cy="66" r="2" fill="#1a2e28" opacity="0.6" />
-              <circle cx="116" cy="66" r="2" fill="#1a2e28" opacity="0.6" />
+              <circle cx="104" cy="66" r="2" fill="var(--ink)" opacity="0.6" />
+              <circle cx="116" cy="66" r="2" fill="var(--ink)" opacity="0.6" />
               <path
                 d="M105 73 Q110 77 115 73"
-                stroke="#1a2e28"
+                stroke="var(--ink)"
                 strokeWidth="1.5"
                 strokeLinecap="round"
                 fill="none"
@@ -99,14 +99,14 @@ export default function AuthLayout({
               />
               <path
                 d="M88 105 Q68 116 62 121"
-                stroke="#2d7d59"
+                stroke="var(--green-text)"
                 strokeWidth="5"
                 strokeLinecap="round"
                 opacity="0.55"
               />
               <path
                 d="M132 105 Q152 116 158 121"
-                stroke="#2d7d59"
+                stroke="var(--green-text)"
                 strokeWidth="5"
                 strokeLinecap="round"
                 opacity="0.55"
@@ -126,7 +126,7 @@ export default function AuthLayout({
                 width="44"
                 height="2.5"
                 rx="1"
-                fill="#2d7d59"
+                fill="var(--green-text)"
                 opacity="0.5"
               />
               <rect
@@ -135,7 +135,7 @@ export default function AuthLayout({
                 width="32"
                 height="2.5"
                 rx="1"
-                fill="#2d7d59"
+                fill="var(--green-text)"
                 opacity="0.4"
               />
               <rect
@@ -154,7 +154,7 @@ export default function AuthLayout({
                 width="20"
                 height="2.5"
                 rx="1"
-                fill="#2d7d59"
+                fill="var(--green-text)"
                 opacity="0.5"
                 transform="rotate(-12 10 28)"
               />
@@ -164,7 +164,7 @@ export default function AuthLayout({
                 width="16"
                 height="2.5"
                 rx="1"
-                fill="#2d7d59"
+                fill="var(--green-text)"
                 opacity="0.4"
                 transform="rotate(-12 10 28)"
               />
@@ -174,26 +174,26 @@ export default function AuthLayout({
                 width="18"
                 height="2.5"
                 rx="1"
-                fill="#2d7d59"
+                fill="var(--green-text)"
                 opacity="0.4"
                 transform="rotate(-12 10 28)"
               />
               <circle cx="176" cy="38" r="17" fill="white" opacity="0.65" />
               <path
                 d="M176 27 L176 38 L183 38"
-                stroke="#2d7d59"
+                stroke="var(--green-text)"
                 strokeWidth="2.5"
                 strokeLinecap="round"
                 opacity="0.7"
               />
-              <circle cx="176" cy="38" r="2" fill="#2d7d59" opacity="0.6" />
+              <circle cx="176" cy="38" r="2" fill="var(--green-text)" opacity="0.6" />
               <rect
                 x="172"
                 y="112"
                 width="7"
                 height="14"
                 rx="3.5"
-                fill="#2d7d59"
+                fill="var(--green-text)"
                 opacity="0.45"
               />
               <ellipse
@@ -201,7 +201,7 @@ export default function AuthLayout({
                 cy="105"
                 rx="12"
                 ry="9"
-                fill="#2d7d59"
+                fill="var(--green-text)"
                 opacity="0.4"
               />
               <ellipse
@@ -209,7 +209,7 @@ export default function AuthLayout({
                 cy="110"
                 rx="8"
                 ry="6"
-                fill="#2d7d59"
+                fill="var(--green-text)"
                 opacity="0.3"
               />
               <ellipse
@@ -217,7 +217,7 @@ export default function AuthLayout({
                 cy="110"
                 rx="8"
                 ry="6"
-                fill="#2d7d59"
+                fill="var(--green-text)"
                 opacity="0.3"
               />
               <rect
@@ -226,41 +226,41 @@ export default function AuthLayout({
                 width="6"
                 height="26"
                 rx="3"
-                fill="#f5c842"
+                fill="var(--yellow)"
                 opacity="0.85"
                 transform="rotate(22 28 88)"
               />
               <path
                 d="M26 110 L32 110 L29 118 Z"
-                fill="#e05050"
+                fill="var(--coral)"
                 opacity="0.75"
                 transform="rotate(22 28 88)"
               />
               <path
                 d="M195 65 L197 69 L201 71 L197 73 L195 77 L193 73 L189 71 L193 69 Z"
-                fill="#2d7d59"
+                fill="var(--green-text)"
                 opacity="0.4"
               />
               <path
                 d="M42 85 L43.5 88 L47 89.5 L43.5 91 L42 94 L40.5 91 L37 89.5 L40.5 88 Z"
-                fill="#2d7d59"
+                fill="var(--green-text)"
                 opacity="0.35"
               />
             </svg>
           </div>
 
-          <h2 className="text-2xl font-bold text-[#1a2e28] mb-3">
-            Inspire.blog
+          <h2 className="text-2xl font-bold text-[var(--ink)] mb-3">
+            Makeframe
           </h2>
-          <p className="text-sm text-[#3d6658] leading-relaxed max-w-[240px]">
-            Unleash your ideas. Write, read, and grow with a community of
-            curious minds.
+          <p className="text-sm text-[var(--ink-soft)] leading-relaxed max-w-[240px]">
+            Copy-paste AI prompts for thumbnails, reels, posts and banners —
+            plus the tools that make them.
           </p>
 
           <div className="flex items-center gap-2 mt-8">
-            <span className="w-6 h-1.5 rounded-full bg-[#2d7d59]" />
-            <span className="w-1.5 h-1.5 rounded-full bg-[#2d7d59]/35" />
-            <span className="w-1.5 h-1.5 rounded-full bg-[#2d7d59]/35" />
+            <span className="w-6 h-1.5 rounded-full bg-[var(--green-text)]" />
+            <span className="w-1.5 h-1.5 rounded-full bg-[var(--green-text)]/35" />
+            <span className="w-1.5 h-1.5 rounded-full bg-[var(--green-text)]/35" />
           </div>
         </div>
 

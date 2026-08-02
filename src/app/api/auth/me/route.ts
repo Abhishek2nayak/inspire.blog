@@ -18,15 +18,10 @@ export async function GET() {
         email: true,
         image: true,
         bio: true,
-        website: true,
-        twitter: true,
-        github: true,
         createdAt: true,
         _count: {
           select: {
-            posts: true,
-            followers: true,
-            following: true,
+            articles: true,
           },
         },
       },
@@ -57,9 +52,6 @@ export async function PATCH(req: Request) {
         name: data.name,
         bio: data.bio,
         image: data.image,
-        website: data.website,
-        twitter: data.twitter,
-        github: data.github,
       },
       select: {
         id: true,
@@ -67,9 +59,6 @@ export async function PATCH(req: Request) {
         email: true,
         image: true,
         bio: true,
-        website: true,
-        twitter: true,
-        github: true,
       },
     });
 

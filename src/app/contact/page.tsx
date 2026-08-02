@@ -6,9 +6,9 @@ import { Label } from "@/components/ui/label";
 import { Mail, MessageSquare, MapPin } from "lucide-react";
 
 export const metadata: Metadata = {
-  title: "Contact Us | Inspire Blog",
+  title: "Contact Us | Makeframe",
   description:
-    "Get in touch with the Inspire Blog team. We'd love to hear from you.",
+    "Get in touch with the Makeframe team. We'd love to hear from you.",
 };
 
 export default function ContactPage() {

@@ -560,7 +560,7 @@ export default function SettingsPage() {
                 <div>
                   <p className="text-sm font-medium text-foreground">Theme</p>
                   <p className="text-xs text-muted-foreground mt-0.5">
-                    Inspire.blog uses a clean light theme optimised for readability.
+                    Makeframe uses a clean light theme optimised for readability.
                   </p>
                 </div>
                 <span className="text-xs font-medium text-muted-foreground border border-border rounded-full px-3 py-1">Light</span>

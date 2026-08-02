@@ -1,53 +1,202 @@
 @import "tailwindcss";
 @plugin "tailwindcss-animate";
 
+/* Not used today (the site ships light-only), but declaring it now means
+   adding dark mode later is a single `.dark { }` block, not a refactor. */
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* ═══════════════════════════════════════════════════════════════════════
+   Makeframe — "editorial risograph" on bone paper.
+
+   Two layers on purpose:
+     1. :root holds RAW values. Components never reference these.
+     2. @theme inline aliases them to semantic names. Components use ONLY
+        those (bg-background, text-foreground, ...), never a raw hex.
+
+   ACCESSIBILITY CONTRACT — the rule that makes this palette work:
+   lime, coral, yellow and lilac are all under 3:1 on bone. They are FILLS
+   ONLY, never `color:`. Green text uses --green-text (5.17:1), never
+   --green (4.06:1, which fails AA at body size).
+   ═══════════════════════════════════════════════════════════════════════ */
+
+:root {
+  color-scheme: light;
+
+  /* ── Raw palette ─────────────────────────────────────────────────── */
+  --bone: #fbfbf0; /* page base */
+  --paper-warm: #f5f1e4; /* warm section surface */
+  --paper-warm-2: #f4f0e3; /* warm alt / muted */
+  --paper-cool: #f0f4f7; /* cool section surface */
+  --paper-cool-2: #e9eff4; /* cool alt */
+  --white: #ffffff; /* cards only */
+
+  --ink: #2c2e2a; /* body text        — 13.3:1 on bone */
+  --ink-soft: #6b6e64; /* secondary text   —  4.95:1 on bone */
+  --rule: #dedbcb; /* hairlines */
+  --rule-strong: #c9c5b2; /* inputs, dividers */
+
+  --lime: #8ed462; /* FILL ONLY — 1.73:1 as text */
+  --lime-deep: #7bc24f; /* lime hover fill */
+  --green: #368d32; /* 4.06:1 — LARGE text / icons / borders only */
+  --green-text: #2e7a2b; /* 5.17:1 — safe for body-size green text */
+  --green-deep: #245c22; /* 12.5:1 — fill under white text */
+
+  --coral: #ff705d; /* FILL ONLY — 2.63:1 as text */
+  --yellow: #f5e211; /* FILL ONLY — 1.28:1 as text */
+  --lilac: #f4acff; /* FILL ONLY */
+  --danger: #b3261e; /* 6.30:1 on bone */
+
+  /* Code surfaces — warm near-black so they sit on paper, not on slate */
+  --code-bg: #23241f;
+  --code-fg: #e6e4d6;
+  --code-border: #3a3c34;
+
+  /* ── Semantic layer — this is what components reference ──────────── */
+  --background: var(--bone);
+  --foreground: var(--ink);
+  --card: var(--white);
+  --card-foreground: var(--ink);
+  --popover: var(--white);
+  --popover-foreground: var(--ink);
+
+  --primary: var(--lime); /* fill */
+  --primary-foreground: var(--ink); /* 7.67:1 on lime */
+  --secondary: var(--paper-warm);
+  --secondary-foreground: var(--ink);
+  --muted: var(--paper-warm-2);
+  --muted-foreground: var(--ink-soft); /* 4.95:1 */
+  --accent: var(--paper-cool);
+  --accent-foreground: var(--ink);
+  --destructive: var(--danger);
+  --destructive-foreground: var(--white);
+
+  --border: var(--rule);
+  --input: var(--rule-strong);
+  --ring: var(--green);
+  --link: var(--green-text); /* 5.17:1 — body links */
+
+  /* ── Riso category chips ──────────────────────────────────────────
+     Spot colors are fills; the foreground is always the paired token,
+     never the spot color itself. Ratios verified against the fill. */
+  --chip-coral: var(--coral);
+  --chip-coral-fg: var(--ink); /*  5.05:1 */
+  --chip-yellow: var(--yellow);
+  --chip-yellow-fg: var(--ink); /* 10.36:1 */
+  --chip-lilac: var(--lilac);
+  --chip-lilac-fg: var(--ink); /*  7.93:1 */
+  --chip-lime: var(--lime);
+  --chip-lime-fg: var(--ink); /*  7.67:1 */
+  --chip-green: var(--green-deep);
+  --chip-green-fg: var(--white); /*  7.99:1 */
+
+  --radius: 0.375rem;
+}
+
 @theme inline {
-  --radius: 0.5rem;
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-link: var(--link);
 
-  /* ── Light mode — Hashnode-inspired: white + slate ── */
-  --color-background: hsl(0 0% 100%);
-  --color-foreground: hsl(222 47% 11%);
-  --color-card: hsl(0 0% 100%);
-  --color-card-foreground: hsl(222 47% 11%);
-  --color-popover: hsl(0 0% 100%);
-  --color-popover-foreground: hsl(222 47% 11%);
-  --color-primary: hsl(222 47% 11%);
-  --color-primary-foreground: hsl(0 0% 100%);
-  --color-secondary: hsl(210 40% 96%);
-  --color-secondary-foreground: hsl(222 47% 11%);
-  --color-muted: hsl(210 40% 96%);
-  --color-muted-foreground: hsl(215 16% 47%);
-  --color-accent: hsl(210 40% 94%);
-  --color-accent-foreground: hsl(222 47% 11%);
-  --color-destructive: hsl(0 72% 51%);
-  --color-destructive-foreground: hsl(0 0% 100%);
-  --color-border: hsl(214 32% 91%);
-  --color-input: hsl(214 32% 91%);
-  --color-ring: hsl(217 91% 60%);
+  /* Direct brand handles for the riso layer */
+  --color-ink: var(--ink);
+  --color-ink-soft: var(--ink-soft);
+  --color-bone: var(--bone);
+  --color-paper-warm: var(--paper-warm);
+  --color-paper-warm-2: var(--paper-warm-2);
+  --color-paper-cool: var(--paper-cool);
+  --color-paper-cool-2: var(--paper-cool-2);
+  --color-lime: var(--lime);
+  --color-lime-deep: var(--lime-deep);
+  --color-green: var(--green);
+  --color-green-text: var(--green-text);
+  --color-green-deep: var(--green-deep);
+  --color-coral: var(--coral);
+  --color-yellow: var(--yellow);
+  --color-lilac: var(--lilac);
+  --color-code-bg: var(--code-bg);
+  --color-code-fg: var(--code-fg);
+  --color-code-border: var(--code-border);
 
-  /* Blue accent for interactive highlights */
-  --color-blue: hsl(217 91% 60%);
-  --color-blue-muted: hsl(214 100% 97%);
+  --color-chip-coral: var(--chip-coral);
+  --color-chip-coral-fg: var(--chip-coral-fg);
+  --color-chip-yellow: var(--chip-yellow);
+  --color-chip-yellow-fg: var(--chip-yellow-fg);
+  --color-chip-lilac: var(--chip-lilac);
+  --color-chip-lilac-fg: var(--chip-lilac-fg);
+  --color-chip-lime: var(--chip-lime);
+  --color-chip-lime-fg: var(--chip-lime-fg);
+  --color-chip-green: var(--chip-green);
+  --color-chip-green-fg: var(--chip-green-fg);
 
-  --color-chart-1: hsl(220 70% 50%);
-  --color-chart-2: hsl(160 60% 45%);
-  --color-chart-3: hsl(30 80% 55%);
-  --color-chart-4: hsl(280 65% 60%);
-  --color-chart-5: hsl(340 75% 55%);
+  /* Small radius scale — flat and printed, not pill-shaped */
+  --radius-sm: 0.25rem;
+  --radius-md: var(--radius); /* 6px — the default */
+  --radius-lg: 0.5rem;
+  --radius-xl: 0.625rem;
 
-  --color-sidebar: hsl(0 0% 99%);
-  --color-sidebar-foreground: hsl(222 47% 11%);
-  --color-sidebar-primary: hsl(222 47% 11%);
-  --color-sidebar-primary-foreground: hsl(0 0% 100%);
-  --color-sidebar-accent: hsl(210 40% 94%);
-  --color-sidebar-accent-foreground: hsl(222 47% 11%);
-  --color-sidebar-border: hsl(214 32% 91%);
-  --color-sidebar-ring: hsl(217 91% 60%);
+  /* Hard offset shadow — the riso "print misregistration" cue */
+  --shadow-riso-sm: 2px 2px 0 0 var(--ink);
+  --shadow-riso: 3px 3px 0 0 var(--ink);
+  --shadow-riso-lg: 5px 5px 0 0 var(--ink);
 
-  --font-sans: var(--font-inter, "Inter"), system-ui, -apple-system, sans-serif;
-  --font-serif: var(--font-lora, "Georgia"), "Cambria", serif;
-  --font-playfair: var(--font-playfair, "Playfair Display"), Georgia, serif;
-  --font-mono: "SFMono-Regular", "Menlo", "Monaco", "Consolas", monospace;
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, -apple-system, sans-serif;
+  --font-display: var(--font-fraunces), Georgia, "Times New Roman", serif;
+  /* Alias: existing `font-serif` heading utilities across the app resolve to
+     the display face. Prefer `font-display` in new code. */
+  --font-serif: var(--font-fraunces), Georgia, "Times New Roman", serif;
+  --font-mono: ui-monospace, "SFMono-Regular", "Menlo", "Consolas", monospace;
+}
+
+/* ── Paper grain ───────────────────────────────────────────────────────
+   Section-level texture. Applied to bands, never to whole pages, and
+   dropped entirely when the user asks for reduced transparency. */
+@utility grain {
+  position: relative;
+  isolation: isolate;
+
+  &::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    opacity: 0.35;
+    mix-blend-mode: multiply;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  .grain::before {
+    display: none;
+  }
+}
+
+/* ── Framed card ───────────────────────────────────────────────────────
+   The riso treatment. KEY CARDS ONLY — if everything is framed the effect
+   dies; the contrast between flat cards and framed cards is the design. */
+@utility card-framed {
+  border: 2px solid var(--ink);
+  border-radius: var(--radius);
+  background: var(--card);
+  box-shadow: 3px 3px 0 0 var(--ink);
 }
 
 /* ── Base ── */
@@ -68,7 +217,7 @@ body {
 }
 
 ::selection {
-  background-color: hsl(217 91% 60% / 0.18);
+  background-color: color-mix(in srgb, var(--lime) 42%, transparent);
   color: inherit;
 }
 
@@ -107,16 +256,18 @@ body {
   top: 0;
   left: 0;
   height: 2px;
-  background: var(--color-blue);
+  background: var(--green-deep);
   z-index: 9999;
   transition: width 100ms ease-out;
 }
 
 /* ── Article content typography ── */
 .article-content {
-  font-family: var(--font-serif);
-  font-size: 1.125rem;
-  line-height: 1.9;
+  /* Body is Inter: this content is tutorials, step lists and prompt blocks —
+     scannable UI-adjacent text, not long-form essay. */
+  font-family: var(--font-sans);
+  font-size: 1.0625rem;
+  line-height: 1.8;
   color: var(--color-foreground);
 }
 
@@ -124,11 +275,12 @@ body {
 .article-content h2,
 .article-content h3,
 .article-content h4 {
-  font-family: var(--font-sans);
+  /* Headings carry the editorial voice. */
+  font-family: var(--font-display);
   color: var(--color-foreground);
   font-weight: 700;
-  letter-spacing: -0.02em;
-  line-height: 1.25;
+  letter-spacing: -0.01em;
+  line-height: 1.2;
   margin-top: 2.5rem;
   margin-bottom: 0.75rem;
 }
@@ -153,7 +305,7 @@ body {
 }
 
 .article-content a {
-  color: var(--color-blue);
+  color: var(--link);
   text-decoration: underline;
   text-underline-offset: 3px;
   text-decoration-thickness: 1px;
@@ -163,7 +315,7 @@ body {
 }
 
 .article-content blockquote {
-  border-left: 3px solid var(--color-blue);
+  border-left: 3px solid var(--green);
   padding: 0.25rem 0 0.25rem 1.5rem;
   margin: 2rem 0;
   font-style: italic;
@@ -199,8 +351,8 @@ body {
 
 .article-content pre {
   position: relative;
-  background: hsl(222 47% 5%);
-  color: hsl(220 15% 85%);
+  background: var(--code-bg);
+  color: var(--code-fg);
   border-radius: 0.625rem;
   padding: 1.25rem 1.5rem;
   overflow-x: auto;
@@ -208,7 +360,7 @@ body {
   font-size: 0.875rem;
   line-height: 1.7;
   font-family: var(--font-mono);
-  border: 1px solid hsl(222 47% 13%);
+  border: 1px solid var(--code-border);
 }
 
 .article-content pre code {
@@ -276,7 +428,7 @@ body {
 }
 
 .ProseMirror blockquote {
-  border-left: 3px solid var(--color-blue);
+  border-left: 3px solid var(--green);
   padding-left: 1.25rem;
   margin: 1.5rem 0;
   font-style: italic;
@@ -298,8 +450,8 @@ body {
 }
 
 .ProseMirror pre {
-  background: hsl(222 47% 5%);
-  color: hsl(220 15% 85%);
+  background: var(--code-bg);
+  color: var(--code-fg);
   border-radius: 0.5rem;
   padding: 1rem 1.25rem;
   overflow-x: auto;
@@ -307,7 +459,7 @@ body {
   font-size: 0.875rem;
   line-height: 1.6;
   font-family: var(--font-mono);
-  border: 1px solid hsl(222 47% 13%);
+  border: 1px solid var(--code-border);
 }
 
 .ProseMirror pre code {
@@ -327,7 +479,7 @@ body {
 }
 
 .ProseMirror a {
-  color: var(--color-blue);
+  color: var(--link);
   text-decoration: underline;
   text-underline-offset: 2px;
 }
@@ -387,13 +539,13 @@ body {
 }
 
 .markdown-preview a {
-  color: var(--color-blue);
+  color: var(--link);
   text-decoration: underline;
   text-underline-offset: 3px;
 }
 
 .markdown-preview blockquote {
-  border-left: 3px solid var(--color-blue);
+  border-left: 3px solid var(--green);
   padding-left: 1rem;
   margin: 1.5rem 0;
   font-style: italic;
@@ -427,8 +579,8 @@ body {
 }
 
 .markdown-preview pre {
-  background: hsl(222 47% 5%);
-  color: hsl(220 15% 85%);
+  background: var(--code-bg);
+  color: var(--code-fg);
   border-radius: 0.5rem;
   padding: 1rem 1.25rem;
   overflow-x: auto;
@@ -436,7 +588,7 @@ body {
   font-size: 0.85rem;
   line-height: 1.6;
   font-family: var(--font-mono);
-  border: 1px solid hsl(222 47% 13%);
+  border: 1px solid var(--code-border);
 }
 
 .markdown-preview img {
@@ -534,8 +686,8 @@ body {
 }
 
 .notion-editor .ProseMirror pre {
-  background: hsl(222 47% 5%);
-  color: hsl(220 15% 85%);
+  background: var(--code-bg);
+  color: var(--code-fg);
   border-radius: 0.625rem;
   padding: 1rem 1.25rem;
   overflow-x: auto;
@@ -543,7 +695,7 @@ body {
   font-size: 0.875rem;
   line-height: 1.6;
   font-family: var(--font-mono);
-  border: 1px solid hsl(222 47% 13%);
+  border: 1px solid var(--code-border);
 }
 
 .notion-editor .ProseMirror pre code {
@@ -564,7 +716,7 @@ body {
 }
 
 .notion-editor .ProseMirror a {
-  color: var(--color-blue);
+  color: var(--link);
   text-decoration: underline;
   text-underline-offset: 2px;
 }
@@ -629,8 +781,8 @@ body {
   border: none !important;
   border-radius: 0 !important;
   margin: 0 !important;
-  background: hsl(222 47% 5%);
-  color: hsl(220 15% 85%);
+  background: var(--code-bg);
+  color: var(--code-fg);
 }
 
 [data-node-view-wrapper] pre > div[data-node-view-content] {
@@ -642,8 +794,8 @@ body {
 
 /* ── Highlight.js ── */
 .hljs {
-  color: hsl(220 15% 85%);
-  background: hsl(222 47% 5%);
+  color: var(--code-fg);
+  background: var(--code-bg);
 }
 .hljs-comment,
 .hljs-quote {

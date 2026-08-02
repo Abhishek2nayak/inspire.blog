@@ -1,182 +1,117 @@
-import React from "react";
+import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { Hash } from "lucide-react";
 import { prisma } from "@/lib/prisma";
-import type { PostWithAuthor } from "@/types";
+import {
+  promptCardInclude,
+  toolCardInclude,
+  articleCardInclude,
+  PUBLISHED,
+} from "@/lib/queries";
+import { absoluteUrl } from "@/lib/site-config";
+import PromptCard from "@/components/prompt/PromptCard";
+import ToolCard from "@/components/tool/ToolCard";
 import ArticleCard from "@/components/article/ArticleCard";
-import { Badge } from "@/components/ui/badge";
 
-interface TagPageProps {
+export async function generateMetadata({
+  params,
+}: {
   params: Promise<{ slug: string }>;
-}
-
-async function getTagWithPosts(slug: string) {
-  const tag = await prisma.tag.findUnique({
-    where: { slug },
-    include: {
-      posts: {
-        where: {
-          post: { published: true },
-        },
-        orderBy: { post: { publishedAt: "desc" } },
-        include: {
-          post: {
-            include: {
-              author: {
-                select: { id: true, name: true, image: true, bio: true },
-              },
-              tags: {
-                include: { tag: true },
-              },
-              _count: {
-                select: {
-                  likes: true,
-                  comments: true,
-                  bookmarks: true,
-                  reactions: true,
-                },
-              },
-            },
-          },
-        },
-      },
-    },
-  });
-
-  return tag;
-}
-
-async function getRelatedTags(currentSlug: string) {
-  const tags = await prisma.tag.findMany({
-    where: { slug: { not: currentSlug } },
-    include: { _count: { select: { posts: true } } },
-    orderBy: { posts: { _count: "desc" } },
-    take: 10,
-  });
-  return tags;
-}
-
-export async function generateMetadata({ params }: TagPageProps) {
+}): Promise<Metadata> {
   const { slug } = await params;
   const tag = await prisma.tag.findUnique({ where: { slug } });
   if (!tag) return { title: "Tag not found" };
+
   return {
-    title: `#${tag.name} — Inspire.blog`,
-    description: `Articles tagged with ${tag.name}`,
+    title: `#${tag.name}`,
+    description: `AI prompts, tools and tutorials tagged ${tag.name}.`,
+    alternates: { canonical: absoluteUrl(`/tag/${tag.slug}`) },
   };
 }
 
-export default async function TagPage({ params }: TagPageProps) {
+export default async function TagPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
-  const tag = await getTagWithPosts(slug);
-
+  const tag = await prisma.tag.findUnique({ where: { slug } });
   if (!tag) notFound();
 
-  const [relatedTags] = await Promise.all([getRelatedTags(slug)]);
+  const [prompts, tools, articles] = await Promise.all([
+    prisma.prompt.findMany({
+      where: { ...PUBLISHED, tags: { some: { tagId: tag.id } } },
+      include: promptCardInclude,
+      orderBy: { copies: "desc" },
+    }),
+    prisma.tool.findMany({
+      where: { ...PUBLISHED, tags: { some: { tagId: tag.id } } },
+      include: toolCardInclude,
+      orderBy: { name: "asc" },
+    }),
+    prisma.article.findMany({
+      where: { ...PUBLISHED, tags: { some: { tagId: tag.id } } },
+      include: articleCardInclude,
+      orderBy: { publishedAt: "desc" },
+    }),
+  ]);
 
-  const posts = tag.posts.map(
-    ({ post }) => post as unknown as PostWithAuthor
-  );
+  const total = prompts.length + tools.length + articles.length;
 
   return (
-    <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
-      <div className="grid grid-cols-1 gap-8 lg:grid-cols-[1fr_280px]">
-        {/* Main content */}
-        <div>
-          {/* Tag header */}
-          <div className="mb-8 rounded-2xl border border-border bg-card p-6 sm:p-8">
-            <div className="flex items-start gap-4">
-              <div className="flex h-14 w-14 items-center justify-center rounded-xl bg-primary/10 shrink-0">
-                <Hash className="h-7 w-7 text-primary" />
-              </div>
-              <div>
-                <h1 className="text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
-                  {tag.name}
-                </h1>
-                <p className="mt-2 text-sm font-medium text-muted-foreground">
-                  {posts.length}{" "}
-                  {posts.length === 1 ? "article" : "articles"}
-                </p>
-              </div>
-            </div>
-          </div>
+    <>
+      <section className="grain border-b-2 border-ink bg-paper-cool">
+        <div className="mx-auto max-w-6xl px-4 py-12">
+          <nav aria-label="Breadcrumb" className="mb-3 text-xs text-muted-foreground">
+            <Link href="/tags" className="hover:text-foreground hover:underline">
+              Tags
+            </Link>
+          </nav>
+          <h1 className="font-display text-4xl font-bold tracking-tight text-foreground">
+            #{tag.name}
+          </h1>
+          <p className="mt-2 text-sm text-muted-foreground">
+            {total} item{total === 1 ? "" : "s"}
+          </p>
+        </div>
+      </section>
 
-          {/* Posts */}
-          {posts.length === 0 ? (
-            <div className="flex flex-col items-center justify-center rounded-2xl border border-border bg-muted/30 py-16 text-center">
-              <div className="mb-3 rounded-full bg-muted p-4">
-                <Hash className="h-7 w-7 text-muted-foreground" />
-              </div>
-              <h2 className="mb-1 text-lg font-semibold text-foreground">
-                No articles yet
-              </h2>
-              <p className="text-sm text-muted-foreground">
-                Be the first to write about {tag.name}!
-              </p>
-              <Link
-                href="/editor/new"
-                className="mt-4 inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors"
-              >
-                Write an article
-              </Link>
-            </div>
-          ) : (
-            <div>
-              {posts.map((post) => (
-                <ArticleCard key={post.id} post={post} />
+      <div className="mx-auto max-w-6xl px-4 py-10">
+        {total === 0 && (
+          <div className="rounded-md border-2 border-dashed border-rule-strong p-12 text-center">
+            <p className="font-display text-lg font-bold text-foreground">Nothing tagged yet</p>
+          </div>
+        )}
+
+        {prompts.length > 0 && (
+          <section className="mb-12">
+            <h2 className="mb-5 font-display text-2xl font-bold text-foreground">Prompts</h2>
+            <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+              {prompts.map((p) => (
+                <PromptCard key={p.id} prompt={p} />
               ))}
             </div>
-          )}
-        </div>
+          </section>
+        )}
 
-        {/* Sidebar: Related tags */}
-        <aside className="hidden lg:block">
-          <div className="sticky top-20">
-            <div className="rounded-xl border border-border bg-card p-5">
-              <h2 className="mb-4 text-sm font-semibold text-foreground">
-                Other Topics
-              </h2>
-              <div className="flex flex-wrap gap-2">
-                {relatedTags.map((relTag) => (
-                  <Link
-                    key={relTag.id}
-                    href={`/tag/${relTag.slug}`}
-                    className="group"
-                  >
-                    <Badge
-                      variant="secondary"
-                      className="cursor-pointer transition-colors group-hover:bg-primary/10 group-hover:text-primary"
-                    >
-                      #{relTag.name}
-                      {relTag._count.posts > 0 && (
-                        <span className="ml-1 text-muted-foreground">
-                          {relTag._count.posts}
-                        </span>
-                      )}
-                    </Badge>
-                  </Link>
-                ))}
-              </div>
+        {tools.length > 0 && (
+          <section className="mb-12">
+            <h2 className="mb-5 font-display text-2xl font-bold text-foreground">Tools</h2>
+            <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+              {tools.map((t) => (
+                <ToolCard key={t.id} tool={t} />
+              ))}
             </div>
+          </section>
+        )}
 
-            <div className="mt-4 rounded-xl border border-border bg-card p-5">
-              <h2 className="mb-3 text-sm font-semibold text-foreground">
-                Share this topic
-              </h2>
-              <p className="mb-3 text-xs text-muted-foreground">
-                Enjoying articles about {tag.name}? Share this page.
-              </p>
-              <Link
-                href={`/editor/new?tag=${tag.slug}`}
-                className="block w-full rounded-lg bg-primary px-3 py-2 text-center text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors"
-              >
-                Write about {tag.name}
-              </Link>
+        {articles.length > 0 && (
+          <section>
+            <h2 className="mb-5 font-display text-2xl font-bold text-foreground">Tutorials</h2>
+            <div className="space-y-4">
+              {articles.map((a) => (
+                <ArticleCard key={a.id} article={a} />
+              ))}
             </div>
-          </div>
-        </aside>
+          </section>
+        )}
       </div>
-    </div>
+    </>
   );
 }

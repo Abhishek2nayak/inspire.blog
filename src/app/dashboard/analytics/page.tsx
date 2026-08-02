@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
-import { Eye, Heart, MessageCircle, FileText, BarChart2 } from "lucide-react";
+import { Eye, Bookmark, MessageCircle, FileText, BarChart2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface PostStat {
@@ -14,8 +14,8 @@ interface PostStat {
   readTime: number;
   createdAt: string;
   _count: {
-    likes: number;
     comments: number;
+    bookmarks: number;
   };
 }
 
@@ -30,11 +30,13 @@ export default function AnalyticsPage() {
 
   const fetchStats = async () => {
     try {
-      const res = await fetch("/api/posts?mine=true");
+      const res = await fetch("/api/articles?mine=true");
       if (!res.ok) throw new Error();
       const data = await res.json();
-      setPosts(data.posts || data);
+      // Guarded: renders empty rather than throwing if the shape shifts.
+      setPosts(Array.isArray(data?.articles) ? data.articles : []);
     } catch {
+      setPosts([]);
       toast({
         title: "Failed to load analytics",
         description: "Please refresh the page.",
@@ -46,8 +48,8 @@ export default function AnalyticsPage() {
   };
 
   const totalViews = posts.reduce((sum, p) => sum + p.views, 0);
-  const totalLikes = posts.reduce((sum, p) => sum + p._count.likes, 0);
-  const totalComments = posts.reduce((sum, p) => sum + p._count.comments, 0);
+  const totalSaves = posts.reduce((sum, p) => sum + (p._count?.bookmarks ?? 0), 0);
+  const totalComments = posts.reduce((sum, p) => sum + (p._count?.comments ?? 0), 0);
   const totalPosts = posts.length;
 
   const maxViews = Math.max(...posts.map((p) => p.views), 1);
@@ -59,9 +61,9 @@ export default function AnalyticsPage() {
       icon: Eye,
     },
     {
-      label: "Total Likes",
-      value: totalLikes.toLocaleString(),
-      icon: Heart,
+      label: "Total Saves",
+      value: totalSaves.toLocaleString(),
+      icon: Bookmark,
     },
     {
       label: "Total Comments",
@@ -140,12 +142,12 @@ export default function AnalyticsPage() {
                         {post.views.toLocaleString()}
                       </span>
                       <span className="flex items-center gap-1">
-                        <Heart className="h-3 w-3" />
-                        {post._count.likes}
+                        <Bookmark className="h-3 w-3" />
+                        {post._count?.bookmarks ?? 0}
                       </span>
                       <span className="flex items-center gap-1">
                         <MessageCircle className="h-3 w-3" />
-                        {post._count.comments}
+                        {post._count?.comments ?? 0}
                       </span>
                     </div>
                   </div>
@@ -178,7 +180,7 @@ export default function AnalyticsPage() {
                       Views
                     </th>
                     <th className="text-right px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                      Likes
+                      Saves
                     </th>
                     <th className="text-right px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider hidden sm:table-cell">
                       Comments
@@ -201,10 +203,10 @@ export default function AnalyticsPage() {
                         {post.views.toLocaleString()}
                       </td>
                       <td className="px-4 py-3.5 text-sm text-muted-foreground text-right tabular-nums">
-                        {post._count.likes}
+                        {post._count?.bookmarks ?? 0}
                       </td>
                       <td className="px-4 py-3.5 text-sm text-muted-foreground text-right hidden sm:table-cell tabular-nums">
-                        {post._count.comments}
+                        {post._count?.comments ?? 0}
                       </td>
                       <td className="px-5 py-3.5 text-sm text-muted-foreground text-right hidden sm:table-cell">
                         {post.readTime} min

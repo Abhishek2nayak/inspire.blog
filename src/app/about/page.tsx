@@ -4,14 +4,13 @@ import Link from "next/link";
 
 export const metadata: Metadata = {
   title:
-    "About Inspire Blog | Best AI Tools, AI News, Tutorials & AI Community",
+    "About Makeframe | Best AI Tools, AI News, Tutorials & AI Community",
   description:
-    "Discover Inspire Blog — your trusted platform for AI tools, AI news, ChatGPT alternatives, machine learning resources, AI tutorials, productivity tools, and the latest artificial intelligence trends.",
+    "Makeframe is a prompt library and marketplace for creators — copy-paste AI prompts for thumbnails, reels, posts and banners, each shown with the output it produced.",
   keywords: [
     "AI tools",
     "best AI tools",
     "Claude AI",
-    "ChatGPT alternatives",
     "Anthropic Claude",
     "generative AI",
     "AI tutorials",
@@ -31,23 +30,24 @@ export default function AboutPage() {
       <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-16 md:py-24">
         {/* Hero Section */}
         <div className="text-center mb-16">
-          <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight text-foreground mb-6">
-            Discover the Future of{" "}
-            <span className="text-primary">Artificial Intelligence</span>
+          <h1 className="font-display text-4xl md:text-5xl font-bold tracking-tight text-foreground mb-6">
+            Prompts that actually{" "}
+            <span className="inline-block border-2 border-ink bg-lime px-2 text-ink">
+              produce something
+            </span>
           </h1>
 
           <p className="text-xl text-muted-foreground leading-relaxed max-w-3xl mx-auto">
-            Inspire Blog is a modern platform built for AI enthusiasts,
-            developers, creators, entrepreneurs, and curious learners who want
-            to stay updated with the fast-moving world of artificial
-            intelligence.
+            Makeframe is a prompt library and marketplace for people who make
+            things — thumbnails, reels, Instagram posts, banners, ad creative.
+            Every prompt shows the output it produced and names the model and
+            settings behind it.
           </p>
 
           <p className="text-lg text-muted-foreground leading-relaxed max-w-3xl mx-auto mt-6">
-            From the latest AI tools and ChatGPT alternatives to machine
-            learning tutorials, productivity software, automation platforms, and
-            honest AI tool reviews — we help people discover smarter ways to
-            learn, build, and grow using AI technology.
+            Alongside the library we review the tools themselves, and publish
+            step-by-step guides for the workflows that need more than one
+            prompt.
           </p>
         </div>
 
@@ -60,24 +60,25 @@ export default function AboutPage() {
 
             <div className="space-y-5 text-muted-foreground leading-relaxed text-lg">
               <p>
-                Artificial intelligence is changing the world faster than ever
-                before, but finding reliable information, useful AI tools, and
-                practical learning resources can still feel overwhelming.
+                Most AI prompts you find online are shared without the thing
+                that matters most: proof they work. A wall of text with no
+                output, no model named, no settings. You paste it, get
+                something unrelated, and start guessing.
               </p>
 
               <p>
-                Our mission is simple — make AI easier, more accessible, and
-                more useful for everyone. Whether you're a beginner exploring AI
-                for the first time or a developer building advanced AI
-                applications, Inspire Blog helps you discover the right tools,
-                tutorials, guides, and strategies.
+                So every listing here carries the example it produced. Paid or
+                free, the images are always public — you judge the result
+                before you spend anything. Prompts name the model they were
+                written for, because a Midjourney prompt and a Sora prompt are
+                not interchangeable.
               </p>
 
               <p>
-                We focus on publishing high-quality content around AI software,
-                AI automation, productivity tools, generative AI, machine
-                learning, ChatGPT, and emerging technology trends that truly
-                matter.
+                Anyone can list a prompt and keep 80% of what it sells for, but
+                every submission is read by a human first. That is deliberately
+                slower than letting everything through, and it is the whole
+                reason the library stays worth browsing.
               </p>
             </div>
           </div>
@@ -86,7 +87,7 @@ export default function AboutPage() {
 
         <section className="mb-20">
           <h2 className="text-3xl font-bold text-center text-foreground mb-12">
-            Why Readers Love Inspire Blog
+            Why creators use Makeframe
           </h2>
 
           <div className="grid md:grid-cols-3 gap-8">

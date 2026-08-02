@@ -12,12 +12,13 @@ import type { CommentWithAuthor } from "@/types";
 import { Trash2, CornerDownRight } from "lucide-react";
 
 interface CommentSectionProps {
-  postId: string;
+  /** Article this thread belongs to. */
+  articleId: string;
   initialComments: CommentWithAuthor[];
 }
 
 export default function CommentSection({
-  postId,
+  articleId,
   initialComments,
 }: CommentSectionProps) {
   const { data: session } = useSession();
@@ -39,10 +40,11 @@ export default function CommentSection({
 
     setSubmitting(true);
     try {
-      const res = await fetch(`/api/posts/${postId}/comments`, {
+      const res = await fetch("/api/comments", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
+          articleId,
           content: text.trim(),
           parentId: parentId || undefined,
         }),
@@ -79,7 +81,7 @@ export default function CommentSection({
     setDeleting(commentId);
     try {
       const res = await fetch(
-        `/api/posts/${postId}/comments/${commentId}`,
+        `/api/comments/${commentId}`,
         { method: "DELETE" }
       );
       if (!res.ok) throw new Error();

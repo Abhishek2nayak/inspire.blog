@@ -1,17 +1,17 @@
 {
-  "name": "Inspire.blog",
-  "short_name": "Inspire",
-  "description": "A modern publishing platform for curious minds.",
+  "name": "Makeframe",
+  "short_name": "Makeframe",
+  "description": "AI prompts and tools for creators — copy-paste prompts for thumbnails, reels, posts and banners.",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#ffffff",
-  "theme_color": "#3b82f6",
+  "background_color": "#FBFBF0",
+  "theme_color": "#8ED462",
   "icons": [
     {
-      "src": "/logo.png",
+      "src": "/icon.svg",
       "sizes": "any",
-      "type": "image/png",
-      "purpose": "any maskable"
+      "type": "image/svg+xml",
+      "purpose": "any"
     }
   ]
 }

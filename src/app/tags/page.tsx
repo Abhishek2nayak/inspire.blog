@@ -1,78 +1,52 @@
-import React from "react";
+import type { Metadata } from "next";
 import Link from "next/link";
-import { Metadata } from "next";
-import { Hash } from "lucide-react";
 import { prisma } from "@/lib/prisma";
+import { absoluteUrl } from "@/lib/site-config";
 
 export const metadata: Metadata = {
-  title: "Explore All Topics | Inspire Blog",
-  description:
-    "Browse all topics and tags on Inspire Blog to find articles about AI, New AI Tools launched, AI Companies, AI Applications, AI Concepts, AI News, and more.",
+  title: "All tags",
+  description: "Every tag across the prompt library, tool directory and tutorials.",
+  alternates: { canonical: absoluteUrl("/tags") },
 };
 
-async function getAllTags() {
+export default async function TagsPage() {
   const tags = await prisma.tag.findMany({
-    include: {
-      _count: {
-        select: { posts: true },
-      },
-    },
-    orderBy: {
-      posts: {
-        _count: "desc",
-      },
-    },
+    include: { _count: { select: { prompts: true, tools: true, articles: true } } },
+    orderBy: { name: "asc" },
   });
-  return tags;
-}
 
-export default async function TagsIndexPage() {
-  const tags = await getAllTags();
+  const used = tags
+    .map((t) => ({ ...t, total: t._count.prompts + t._count.tools + t._count.articles }))
+    .filter((t) => t.total > 0)
+    .sort((a, b) => b.total - a.total);
 
   return (
-    <div className="min-h-screen bg-background">
-      <main className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
-        <div className="text-center mb-16">
-          <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight text-foreground mb-6">
-            Explore Topics
+    <>
+      <section className="grain border-b-2 border-ink bg-paper-cool">
+        <div className="mx-auto max-w-4xl px-4 py-12">
+          <h1 className="font-display text-4xl font-bold tracking-tight text-foreground">
+            Tags
           </h1>
-          <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-            Discover articles across a wide range of topics. Dive into
-            artificial intelligence, modern web development, productivity, and
-            the latest technology trends.
+          <p className="mt-2 text-base text-muted-foreground">
+            {used.length} tags across prompts, tools and tutorials.
           </p>
         </div>
+      </section>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-          {tags.map((tag) => (
+      <div className="mx-auto max-w-4xl px-4 py-10">
+        <div className="flex flex-wrap gap-2">
+          {used.map((t) => (
             <Link
-              key={tag.id}
-              href={`/tag/${tag.slug}`}
-              className="group flex flex-col items-center p-8 bg-card border border-border rounded-2xl hover:border-primary/50 hover:shadow-md transition-all duration-300 text-center"
+              key={t.id}
+              href={`/tag/${t.slug}`}
+              className="inline-flex items-center gap-1.5 rounded-sm border border-border bg-card px-3 py-1.5 text-sm text-foreground transition-colors hover:border-ink"
             >
-              <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-xl bg-primary/10 text-primary group-hover:bg-primary group-hover:text-primary-foreground transition-colors duration-300">
-                <Hash size={28} />
-              </div>
-              <h2 className="text-xl font-bold text-foreground mb-2 group-hover:text-primary transition-colors">
-                {tag.name}
-              </h2>
-              <p className="text-sm font-medium text-muted-foreground bg-secondary/50 px-3 py-1 rounded-full">
-                {tag._count.posts}{" "}
-                {tag._count.posts === 1 ? "article" : "articles"}
-              </p>
+              #{t.name}
+              <span className="text-xs text-muted-foreground">{t.total}</span>
             </Link>
           ))}
         </div>
-
-        {tags.length === 0 && (
-          <div className="text-center py-20 border border-dashed border-border rounded-2xl bg-card/50">
-            <Hash className="mx-auto h-12 w-12 text-muted-foreground mb-4 opacity-20" />
-            <p className="text-lg font-medium text-muted-foreground">
-              No topics have been added yet.
-            </p>
-          </div>
-        )}
-      </main>
-    </div>
+      </div>
+    </>
   );
 }

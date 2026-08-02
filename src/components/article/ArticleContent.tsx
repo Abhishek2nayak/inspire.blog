@@ -1,88 +1,97 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import { cn } from "@/lib/utils";
+import { sanitizeHtml } from "@/lib/sanitize";
 
 interface ArticleContentProps {
   content: string;
   className?: string;
 }
 
-export default function ArticleContent({
-  content,
-  className,
-}: ArticleContentProps) {
+export default function ArticleContent({ content, className }: ArticleContentProps) {
   const containerRef = useRef<HTMLDivElement>(null);
+
+  /**
+   * Sanitised on write too, before it ever reaches the DB. Doing it again here
+   * is defence in depth: anything already stored from before that guard
+   * existed, or introduced by a future prompt-injection in generated content,
+   * still cannot execute.
+   */
+  const safe = useMemo(() => sanitizeHtml(content), [content]);
 
   useEffect(() => {
     const container = containerRef.current;
     if (!container) return;
 
-    // Add ids to h2/h3 for TOC linking
-    const headings = container.querySelectorAll("h2, h3");
-    headings.forEach((heading, idx) => {
-      if (!heading.id) {
-        const slug = heading.textContent
-          ?.toLowerCase()
-          .replace(/\s+/g, "-")
-          .replace(/[^a-z0-9-]/g, "")
-          .slice(0, 60);
-        heading.id = slug ? `${slug}-${idx}` : `heading-${idx}`;
-      }
+    // Heading ids for the table of contents.
+    container.querySelectorAll("h2, h3").forEach((heading, idx) => {
+      if (heading.id) return;
+      const slug = heading.textContent
+        ?.toLowerCase()
+        .replace(/\s+/g, "-")
+        .replace(/[^a-z0-9-]/g, "")
+        .slice(0, 60);
+      heading.id = slug ? `${slug}-${idx}` : `heading-${idx}`;
     });
 
-    // Add copy buttons to code blocks
-    const codeBlocks = container.querySelectorAll("pre");
+    const codeBlocks = Array.from(container.querySelectorAll("pre"));
     codeBlocks.forEach((pre) => {
       if (pre.querySelector(".copy-code-btn")) return;
-      if (pre.style.position !== "relative") {
-        pre.style.position = "relative";
-      }
+      pre.style.position = "relative";
 
       const btn = document.createElement("button");
+      btn.type = "button";
       btn.className =
-        "copy-code-btn absolute top-2 right-2 bg-white/10 hover:bg-white/20 text-white/80 hover:text-white text-xs px-2 py-1 rounded transition-colors";
+        "copy-code-btn absolute top-2 right-2 rounded-sm border border-white/20 bg-white/10 px-2 py-1 text-xs text-white/80 transition-colors hover:bg-white/20 hover:text-white";
       btn.textContent = "Copy";
       btn.addEventListener("click", async () => {
-        const code = pre.querySelector("code");
-        const text = code?.textContent || pre.textContent || "";
+        const text = pre.querySelector("code")?.textContent || pre.textContent || "";
+        let ok = false;
         try {
-          await navigator.clipboard.writeText(text);
-          btn.textContent = "Copied!";
-          setTimeout(() => (btn.textContent = "Copy"), 2000);
+          if (navigator.clipboard && window.isSecureContext) {
+            await navigator.clipboard.writeText(text);
+            ok = true;
+          }
         } catch {
-          btn.textContent = "Failed";
-          setTimeout(() => (btn.textContent = "Copy"), 2000);
+          ok = false;
         }
+        // Same reason as CopyBlock: clipboard API is undefined on plain http,
+        // so fall back rather than silently doing nothing.
+        if (!ok) {
+          try {
+            const ta = document.createElement("textarea");
+            ta.value = text;
+            ta.style.position = "fixed";
+            ta.style.opacity = "0";
+            document.body.appendChild(ta);
+            ta.select();
+            ok = document.execCommand("copy");
+            document.body.removeChild(ta);
+          } catch {
+            ok = false;
+          }
+        }
+        btn.textContent = ok ? "Copied" : "Press Ctrl+C";
+        setTimeout(() => (btn.textContent = "Copy"), 2000);
       });
       pre.appendChild(btn);
     });
 
     return () => {
-      // Cleanup copy buttons on unmount
-      codeBlocks.forEach((pre) => {
-        pre.querySelector(".copy-code-btn")?.remove();
-      });
+      codeBlocks.forEach((pre) => pre.querySelector(".copy-code-btn")?.remove());
     };
-  }, [content]);
+  }, [safe]);
 
   return (
     <div
       ref={containerRef}
-      className={cn(
-        "article-content prose prose-lg max-w-none",
-        "prose-headings:font-serif prose-headings:tracking-tight",
-        "prose-h1:text-4xl prose-h2:text-2xl prose-h3:text-xl",
-        "prose-p:leading-relaxed prose-p:text-foreground/90",
-        "prose-a:text-primary prose-a:underline prose-a:underline-offset-2",
-        "prose-blockquote:border-l-4 prose-blockquote:border-primary/30 prose-blockquote:pl-4 prose-blockquote:italic",
-        "prose-code:bg-muted prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded prose-code:text-sm prose-code:font-mono",
-        "prose-pre:bg-zinc-900 prose-pre:text-zinc-100 prose-pre:rounded-xl prose-pre:overflow-x-auto",
-        "prose-img:rounded-xl prose-img:mx-auto",
-        "prose-hr:border-border",
-        className
-      )}
-      dangerouslySetInnerHTML={{ __html: content }}
+      // Styling comes entirely from the .article-content block in globals.css.
+      // The prose-* utilities that used to be here were no-ops —
+      // @tailwindcss/typography is not installed — and having two competing
+      // systems is worse than one that works.
+      className={cn("article-content max-w-none", className)}
+      dangerouslySetInnerHTML={{ __html: safe }}
     />
   );
 }
