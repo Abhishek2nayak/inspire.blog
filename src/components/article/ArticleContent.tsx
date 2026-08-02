@@ -1,8 +1,7 @@
 "use client";
 
-import { useEffect, useMemo, useRef } from "react";
+import { useEffect, useRef } from "react";
 import { cn } from "@/lib/utils";
-import { sanitizeHtml } from "@/lib/sanitize";
 
 interface ArticleContentProps {
   content: string;
@@ -13,12 +12,12 @@ export default function ArticleContent({ content, className }: ArticleContentPro
   const containerRef = useRef<HTMLDivElement>(null);
 
   /**
-   * Sanitised on write too, before it ever reaches the DB. Doing it again here
-   * is defence in depth: anything already stored from before that guard
-   * existed, or introduced by a future prompt-injection in generated content,
-   * still cannot execute.
+   * `content` arrives ALREADY SANITISED — once on write, and again in the
+   * server component that renders this. Sanitising here too would mean
+   * shipping the sanitiser to the browser, and it depends on Node-only
+   * parsing. Never pass unsanitised HTML into this component.
    */
-  const safe = useMemo(() => sanitizeHtml(content), [content]);
+  const safe = content;
 
   useEffect(() => {
     const container = containerRef.current;

@@ -82,6 +82,7 @@ export default function PromptForm({
           }),
         }
       );
+      console.log("[prompt save] HTTP", res);
 
       if (!res.ok) {
         // Do NOT call res.json() before checking ok — a 500 returns HTML and

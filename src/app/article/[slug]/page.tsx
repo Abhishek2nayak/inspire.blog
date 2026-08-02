@@ -7,7 +7,7 @@ import { Clock } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { articleDetailInclude, articleCardInclude, PUBLISHED } from "@/lib/queries";
 import { siteConfig, absoluteUrl } from "@/lib/site-config";
-import { stripHtml } from "@/lib/sanitize";
+import { sanitizeHtml, stripHtml } from "@/lib/sanitize";
 import { formatDate } from "@/lib/utils";
 import ArticleContent from "@/components/article/ArticleContent";
 import StepRenderer from "@/components/article/StepRenderer";
@@ -221,7 +221,9 @@ export default async function ArticlePage({
 
         {article.tools.length > 0 && <AffiliateDisclosure className="mb-6" />}
 
-        <ArticleContent content={article.content} />
+        {/* Sanitised here (server) because ArticleContent is a client
+            component and the sanitiser is Node-only. */}
+        <ArticleContent content={sanitizeHtml(article.content)} />
 
         {article.steps.length > 0 && (
           <section className="mt-10">
