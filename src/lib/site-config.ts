@@ -1,8 +1,6 @@
 /**
- * Single source of truth for brand strings, URLs and social handles.
- *
- * Nothing else in the app should hardcode the site name, domain or tagline —
- * import from here so a rename is a one-file change.
+ * brand configuration for Makeframe. This is the single source of truth for the
+ * site's name, tagline, social handles, and other brand-related metadata.
  */
 export const siteConfig = {
   name: "Makeframe",
@@ -10,16 +8,7 @@ export const siteConfig = {
   description:
     "Copy-paste AI prompts for Instagram posts, YouTube thumbnails, reels and banners — plus honest reviews of the tools that make them.",
 
-  /**
-   * Public origin, no trailing slash.
-   *
-   * The fallback is the live domain, NOT a placeholder. Everything
-   * SEO-critical derives from this — canonical tags, og:url, the sitemap,
-   * robots.txt and the RSS feed — so if NEXT_PUBLIC_APP_URL is ever missing
-   * on a deploy, the wrong value here silently tells Google the canonical
-   * version of every page lives somewhere else. That is what happened when
-   * this still defaulted to the pre-rebrand domain.
-   */
+
   url: (process.env.NEXT_PUBLIC_APP_URL || "https://makeframe.online").replace(/\/$/, ""),
 
   locale: "en_US",
@@ -60,9 +49,9 @@ export const siteConfig = {
    * makeframe.online mailboxes are set up; it's a one-file edit.
    */
   emails: {
-    general: "hello@mythosh.com",
-    legal: "legal@mythosh.com",
-    privacy: "privacy@mythosh.com",
+    general: "hello@makeframe.online",
+    legal: "legal@makeframe.online",
+    privacy: "privacy@makeframe.online",
   },
   /**
    * Search Console verification token. Tokens are issued PER PROPERTY, so the

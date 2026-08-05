@@ -1,19 +1,5 @@
-/**
- * The fixed topic clusters for the site — the single source of truth used by:
- *   - prisma/seed.ts               (creates the Category rows)
- *   - src/lib/ai-writer.ts         (constrains which cluster a draft is filed under)
- *   - src/components/layout/Navbar (the "Topics" menu)
- *   - src/app/category/[slug]      (pillar landing pages)
- *
- * To add or rename a cluster: edit this list, then re-run the seed.
- *
- * NOTE: this is the "what topic" axis. The orthogonal "what am I making"
- * axis (output type) and "which model" axis live in ./prompts.ts. Do not
- * merge them — crossing 5 topics with 11 output types would give you 55
- * clusters.
- */
 
-/** Riso chip token keys. These map to --chip-* in globals.css. */
+
 export type ChipColor = "coral" | "yellow" | "lilac" | "lime" | "green";
 
 export interface ClusterDef {
@@ -88,3 +74,5 @@ export const CHIP_CLASSES: Record<ChipColor, string> = {
 export function chipClass(chip: ChipColor | string | null | undefined): string {
   return CHIP_CLASSES[(chip as ChipColor) ?? "lime"] ?? CHIP_CLASSES.lime;
 }
+
+
