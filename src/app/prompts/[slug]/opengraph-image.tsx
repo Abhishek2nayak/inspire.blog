@@ -6,6 +6,16 @@ export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
 /**
+ * Cached for a day.
+ *
+ * This is a separate HTTP request from the page itself, fired by every social
+ * unfurler and crawler that sees the og:image tag — so uncached it silently
+ * doubled the request count for every prompt. The card only changes when the
+ * title, price or first example does, none of which need per-request freshness.
+ */
+export const revalidate = 86400;
+
+/**
  * The share card for a prompt IS its example output.
  *
  * On a visual site that massively out-clicks a text card — someone deciding

@@ -2,11 +2,27 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
-import { toolCardInclude, PUBLISHED } from "@/lib/queries";
+import { toolCardInclude, PUBLISHED, JOIN } from "@/lib/queries";
+import type { ToolCard as ToolCardData } from "@/lib/queries";
+import { safeQuery } from "@/lib/safe-query";
+import { getCategories } from "@/api/categories";
 import { siteConfig, absoluteUrl } from "@/lib/site-config";
 import ToolCard from "@/components/tool/ToolCard";
 import ToolFilterPills from "@/components/tool/ToolFilterPills";
 import AffiliateDisclosure from "@/components/tool/AffiliateDisclosure";
+
+/**
+ * NOTE: this page reads searchParams (pricing, category filters), so Next
+ * classifies it Dynamic and this value never takes effect — verify with the
+ * route table in `next build`, where /tools shows as ƒ not ○.
+ *
+ * It is kept because the per-request cost is now ~1 SQL statement: the tool
+ * query is a single joined statement, and the category list is served from the
+ * cache in src/api/categories.ts. Making the shell static would save nothing
+ * measurable and would mean lifting the filter state into a client component.
+ * If PPR is enabled later, this becomes live with no other change.
+ */
+export const revalidate = 3600;
 
 export const metadata: Metadata = {
   title: "AI tools for creators",
@@ -37,12 +53,21 @@ export default async function ToolsPage({ searchParams }: { searchParams: Search
   };
 
   const [tools, categories] = await Promise.all([
-    prisma.tool.findMany({
-      where,
-      include: toolCardInclude,
-      orderBy: [{ featured: "desc" }, { name: "asc" }],
-    }),
-    prisma.category.findMany({ orderBy: { order: "asc" }, select: { slug: true, name: true } }),
+    // safeQuery because this page now prerenders — see the note in app/page.tsx.
+    safeQuery(
+      () =>
+        prisma.tool.findMany({
+          ...JOIN,
+          where,
+          include: toolCardInclude,
+          orderBy: [{ featured: "desc" }, { name: "asc" }],
+          take: 60,
+        }),
+      [] as ToolCardData[]
+    ),
+    // Shared cached lookup — same list /prompts and /sell render. Already
+    // degrades to [] on failure; see src/api/categories.ts.
+    getCategories(),
   ]);
 
   const jsonLd = {

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { withApiErrors } from "@/lib/api-handler";
 import { prisma } from "@/lib/prisma";
+import { revalidatePrompts } from "@/api/revalidate";
 import { getCurrentAdmin } from "@/lib/session";
 
 /**
@@ -47,6 +48,7 @@ async function POSTHandler(
         rejectionReason: null,
       },
     });
+    revalidatePrompts(updated.slug);
     return NextResponse.json(updated);
   }
 
@@ -62,6 +64,7 @@ async function POSTHandler(
       where: { id },
       data: { status: "REJECTED", rejectionReason: reason },
     });
+    revalidatePrompts(updated.slug);
     return NextResponse.json(updated);
   }
 

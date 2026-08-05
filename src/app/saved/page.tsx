@@ -3,7 +3,12 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/session";
-import { promptCardInclude, toolCardInclude, articleCardInclude } from "@/lib/queries";
+import {
+  promptCardInclude,
+  toolCardInclude,
+  articleCardInclude,
+  JOIN,
+} from "@/lib/queries";
 import PromptCard from "@/components/prompt/PromptCard";
 import ToolCard from "@/components/tool/ToolCard";
 import ArticleCard from "@/components/article/ArticleCard";
@@ -29,13 +34,25 @@ export default async function SavedPage() {
 
   const [prompts, tools, articles] = await Promise.all([
     promptIds.length
-      ? prisma.prompt.findMany({ where: { id: { in: promptIds } }, include: promptCardInclude })
+      ? prisma.prompt.findMany({
+          ...JOIN,
+          where: { id: { in: promptIds } },
+          include: promptCardInclude,
+        })
       : [],
     toolIds.length
-      ? prisma.tool.findMany({ where: { id: { in: toolIds } }, include: toolCardInclude })
+      ? prisma.tool.findMany({
+          ...JOIN,
+          where: { id: { in: toolIds } },
+          include: toolCardInclude,
+        })
       : [],
     articleIds.length
-      ? prisma.article.findMany({ where: { id: { in: articleIds } }, include: articleCardInclude })
+      ? prisma.article.findMany({
+          ...JOIN,
+          where: { id: { in: articleIds } },
+          include: articleCardInclude,
+        })
       : [],
   ]);
 

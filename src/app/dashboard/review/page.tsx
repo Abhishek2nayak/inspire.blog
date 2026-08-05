@@ -1,10 +1,12 @@
 import { prisma } from "@/lib/prisma";
+import { JOIN } from "@/lib/queries";
 import ModerationQueue, { type PendingPrompt } from "@/components/dashboard/ModerationQueue";
 
 export const dynamic = "force-dynamic";
 
 export default async function ReviewQueuePage() {
   const pending = await prisma.prompt.findMany({
+    ...JOIN,
     where: { status: "PENDING" },
     include: {
       author: { select: { name: true, email: true } },

@@ -7,6 +7,7 @@ import {
   toolCardInclude,
   articleCardInclude,
   PUBLISHED,
+  JOIN,
 } from "@/lib/queries";
 import { absoluteUrl } from "@/lib/site-config";
 import PromptCard from "@/components/prompt/PromptCard";
@@ -32,6 +33,7 @@ export default async function SearchPage({ searchParams }: { searchParams: Searc
   const [prompts, tools, articles] = hasQuery
     ? await Promise.all([
         prisma.prompt.findMany({
+          ...JOIN,
           where: {
             ...PUBLISHED,
             OR: [{ title: contains }, { description: contains }, { body: contains }],
@@ -41,11 +43,13 @@ export default async function SearchPage({ searchParams }: { searchParams: Searc
           take: 12,
         }),
         prisma.tool.findMany({
+          ...JOIN,
           where: { ...PUBLISHED, OR: [{ name: contains }, { tagline: contains }] },
           include: toolCardInclude,
           take: 6,
         }),
         prisma.article.findMany({
+          ...JOIN,
           where: { ...PUBLISHED, OR: [{ title: contains }, { excerpt: contains }] },
           include: articleCardInclude,
           orderBy: { publishedAt: "desc" },

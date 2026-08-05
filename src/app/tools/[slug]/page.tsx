@@ -5,7 +5,7 @@ import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { ArrowUpRight, Check, X } from "lucide-react";
 import { prisma } from "@/lib/prisma";
-import { toolDetailInclude, PUBLISHED } from "@/lib/queries";
+import { toolDetailInclude, PUBLISHED, JOIN } from "@/lib/queries";
 import { siteConfig, absoluteUrl } from "@/lib/site-config";
 import { stripHtml } from "@/lib/sanitize";
 import { CategoryChip, PricingBadge } from "@/components/prompt/Badges";
@@ -13,8 +13,31 @@ import PromptCard from "@/components/prompt/PromptCard";
 import RatingStars from "@/components/tool/RatingStars";
 import AffiliateDisclosure from "@/components/tool/AffiliateDisclosure";
 
+/** Busted on publish/edit by revalidateTools() — see src/api/revalidate.ts. */
+export const revalidate = 3600;
+
+/**
+ * Opts this route into ISR without prerendering anything at build time.
+ *
+ * WHY THE EMPTY ARRAY: `export const revalidate` alone does nothing on a
+ * dynamic segment — without generateStaticParams Next treats the route as
+ * fully dynamic and never writes it to the ISR cache (verify with
+ * `dynamicRoutes` in .next/prerender-manifest.json, which was empty before
+ * this). Returning [] generates no pages during `next build`, so the deploy
+ * stays independent of the database, while `dynamicParams` (true by default)
+ * renders each slug on first request and then caches it for `revalidate`.
+ */
+export async function generateStaticParams() {
+  return [];
+}
+
+
 const getTool = cache(async (slug: string) => {
-  return prisma.tool.findFirst({ where: { slug, ...PUBLISHED }, include: toolDetailInclude });
+  return prisma.tool.findFirst({
+    ...JOIN,
+    where: { slug, ...PUBLISHED },
+    include: toolDetailInclude,
+  });
 });
 
 export async function generateMetadata({

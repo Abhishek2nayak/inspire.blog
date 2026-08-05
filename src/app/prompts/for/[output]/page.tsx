@@ -2,7 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { prisma } from "@/lib/prisma";
-import { promptCardInclude, PUBLISHED } from "@/lib/queries";
+import { promptCardInclude, PUBLISHED, JOIN } from "@/lib/queries";
 import { OUTPUT_TYPES, getOutputType } from "@/lib/prompts";
 import { siteConfig, absoluteUrl } from "@/lib/site-config";
 import PromptCard from "@/components/prompt/PromptCard";
@@ -18,6 +18,23 @@ import PromptCard from "@/components/prompt/PromptCard";
  * without needing a rebuild.
  */
 export const revalidate = 3600;
+
+/**
+ * Opts this route into ISR without prerendering anything at build time.
+ *
+ * WHY THE EMPTY ARRAY: `export const revalidate` alone does nothing on a
+ * dynamic segment — without generateStaticParams Next treats the route as
+ * fully dynamic and never writes it to the ISR cache (verify with
+ * `dynamicRoutes` in .next/prerender-manifest.json, which was empty before
+ * this). Returning [] generates no pages during `next build`, so the deploy
+ * stays independent of the database — the property the comment above was
+ * protecting — while `dynamicParams` (true by default) renders each slug on
+ * first request and then caches it for `revalidate`.
+ */
+export async function generateStaticParams() {
+  return [];
+}
+
 
 
 export async function generateMetadata({
@@ -46,6 +63,7 @@ export default async function OutputPillarPage({
   if (!def) notFound();
 
   const prompts = await prisma.prompt.findMany({
+    ...JOIN,
     where: { ...PUBLISHED, outputType: def.value },
     include: promptCardInclude,
     orderBy: [{ featured: "desc" }, { copies: "desc" }],

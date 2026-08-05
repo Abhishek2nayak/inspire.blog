@@ -1,7 +1,9 @@
 import Link from "next/link";
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
-import { promptCardInclude, PUBLISHED } from "@/lib/queries";
+import { promptCardInclude, PUBLISHED, JOIN } from "@/lib/queries";
+import type { PromptCard as PromptCardData } from "@/lib/queries";
+import { safeQuery } from "@/lib/safe-query";
 import { getOutputType } from "@/lib/prompts";
 import PromptCard from "./PromptCard";
 
@@ -49,12 +51,18 @@ export default async function PromptResults({
         ? { sales: "desc" }
         : { publishedAt: "desc" };
 
-  const prompts = await prisma.prompt.findMany({
-    where,
-    include: promptCardInclude,
-    orderBy,
-    take: 60,
-  });
+  // safeQuery because /prompts prerenders its shell — see app/page.tsx.
+  const prompts = await safeQuery(
+    () =>
+      prisma.prompt.findMany({
+        ...JOIN,
+        where,
+        include: promptCardInclude,
+        orderBy,
+        take: 60,
+      }),
+    [] as PromptCardData[]
+  );
 
   if (prompts.length === 0) {
     return (

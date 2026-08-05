@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { withApiErrors } from "@/lib/api-handler";
 import { prisma } from "@/lib/prisma";
+import { revalidatePrompts } from "@/api/revalidate";
 import { getCurrentAdmin } from "@/lib/session";
 import { generateSlug } from "@/lib/utils";
 import { sanitizeHtml } from "@/lib/sanitize";
@@ -128,6 +129,7 @@ async function PATCHHandler(
     },
   });
 
+  revalidatePrompts(prompt.slug);
   return NextResponse.json(prompt);
 }
 
@@ -144,6 +146,7 @@ async function DELETEHandler(
   } catch {
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
+  revalidatePrompts();
   return NextResponse.json({ ok: true });
 }
 

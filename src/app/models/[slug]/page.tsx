@@ -1,9 +1,10 @@
+import { cache } from "react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowUpRight } from "lucide-react";
 import { prisma } from "@/lib/prisma";
-import { promptCardInclude, PUBLISHED } from "@/lib/queries";
+import { promptCardInclude, PUBLISHED, JOIN } from "@/lib/queries";
 import { siteConfig, absoluteUrl } from "@/lib/site-config";
 import PromptCard from "@/components/prompt/PromptCard";
 
@@ -19,6 +20,27 @@ import PromptCard from "@/components/prompt/PromptCard";
  */
 export const revalidate = 3600;
 
+/**
+ * Opts this route into ISR without prerendering anything at build time.
+ *
+ * WHY THE EMPTY ARRAY: `export const revalidate` alone does nothing on a
+ * dynamic segment — without generateStaticParams Next treats the route as
+ * fully dynamic and never writes it to the ISR cache (verify with
+ * `dynamicRoutes` in .next/prerender-manifest.json, which was empty before
+ * this). Returning [] generates no pages during `next build`, so the deploy
+ * stays independent of the database — the property the comment above was
+ * protecting — while `dynamicParams` (true by default) renders each slug on
+ * first request and then caches it for `revalidate`.
+ */
+export async function generateStaticParams() {
+  return [];
+}
+
+
+/** Shared by generateMetadata and the page — these ran the same query twice. */
+const getModel = cache(async (slug: string) => {
+  return prisma.aiModel.findUnique({ where: { slug } });
+});
 
 export async function generateMetadata({
   params,
@@ -26,7 +48,7 @@ export async function generateMetadata({
   params: Promise<{ slug: string }>;
 }): Promise<Metadata> {
   const { slug } = await params;
-  const model = await prisma.aiModel.findUnique({ where: { slug } });
+  const model = await getModel(slug);
   if (!model) return { title: "Model not found" };
 
   return {
@@ -38,14 +60,16 @@ export async function generateMetadata({
 
 export default async function ModelPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
-  const model = await prisma.aiModel.findUnique({ where: { slug } });
+  const model = await getModel(slug);
   if (!model) notFound();
 
   const [prompts, others] = await Promise.all([
     prisma.prompt.findMany({
+      ...JOIN,
       where: { ...PUBLISHED, modelId: model.id },
       include: promptCardInclude,
       orderBy: [{ featured: "desc" }, { copies: "desc" }],
+      take: 48,
     }),
     prisma.aiModel.findMany({
       where: { id: { not: model.id } },

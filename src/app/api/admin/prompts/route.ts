@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { withApiErrors } from "@/lib/api-handler";
 import { prisma } from "@/lib/prisma";
+import { revalidatePrompts } from "@/api/revalidate";
 import { getCurrentAdmin } from "@/lib/session";
 import { generateSlug } from "@/lib/utils";
 import { sanitizeHtml } from "@/lib/sanitize";
@@ -87,6 +88,7 @@ async function POSTHandler(req: Request) {
     },
   });
 
+  revalidatePrompts(prompt.slug);
   return NextResponse.json(prompt, { status: 201 });
 }
 

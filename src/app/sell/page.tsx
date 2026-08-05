@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
-import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/session";
+import { getAiModels } from "@/api/aimodels";
+import { getCategories } from "@/api/categories";
 import { absoluteUrl } from "@/lib/site-config";
 import SellPromptForm from "@/components/prompt/SellPromptForm";
 
@@ -16,10 +17,9 @@ export default async function SellPage() {
   const user = await getCurrentUser();
   if (!user?.id) redirect("/login?callbackUrl=/sell");
 
-  const [models, categories] = await Promise.all([
-    prisma.aiModel.findMany({ orderBy: { order: "asc" }, select: { slug: true, name: true } }),
-    prisma.category.findMany({ orderBy: { order: "asc" }, select: { slug: true, name: true } }),
-  ]);
+  // Shared cached lookups — see src/api/. These are identical to what /prompts
+  // renders, so serving them from one cache removes two queries per page view.
+  const [models, categories] = await Promise.all([getAiModels(), getCategories()]);
 
   return (
     <>

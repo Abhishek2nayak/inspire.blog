@@ -1,11 +1,12 @@
 import { NextResponse } from "next/server";
 import { withApiErrors } from "@/lib/api-handler";
 import { prisma } from "@/lib/prisma";
+import { revalidateArticles } from "@/api/revalidate";
 import { getCurrentAdmin } from "@/lib/session";
 import { generateSlug, calculateReadTime, getExcerpt } from "@/lib/utils";
 import { sanitizeHtml } from "@/lib/sanitize";
 import { upsertTags } from "@/lib/tags";
-import { articleCardInclude, PUBLISHED } from "@/lib/queries";
+import { articleCardInclude, PUBLISHED, JOIN } from "@/lib/queries";
 
 /**
  * GET /api/articles
@@ -24,6 +25,7 @@ async function GETHandler(req: Request) {
   }
 
   const articles = await prisma.article.findMany({
+    ...JOIN,
     where: {
       ...(includeDrafts && admin ? {} : PUBLISHED),
       ...(mine && admin ? { authorId: admin.id } : {}),
@@ -92,6 +94,7 @@ async function POSTHandler(req: Request) {
     },
   });
 
+  revalidateArticles(article.slug);
   return NextResponse.json(article, { status: 201 });
 }
 

@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Plus, ImageOff } from "lucide-react";
 import { prisma } from "@/lib/prisma";
+import { JOIN } from "@/lib/queries";
 import { formatDate, formatNumber } from "@/lib/utils";
 import { getOutputTypeByValue } from "@/lib/prompts";
 import { cn } from "@/lib/utils";
@@ -16,6 +17,7 @@ const STATUS_STYLE: Record<string, string> = {
 
 export default async function DashboardPromptsPage() {
   const prompts = await prisma.prompt.findMany({
+    ...JOIN,
     include: {
       model: { select: { name: true } },
       _count: { select: { examples: true } },

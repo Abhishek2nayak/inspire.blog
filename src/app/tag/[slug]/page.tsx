@@ -1,3 +1,4 @@
+import { cache } from "react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -7,11 +8,46 @@ import {
   toolCardInclude,
   articleCardInclude,
   PUBLISHED,
+  JOIN,
 } from "@/lib/queries";
 import { absoluteUrl } from "@/lib/site-config";
 import PromptCard from "@/components/prompt/PromptCard";
 import ToolCard from "@/components/tool/ToolCard";
 import ArticleCard from "@/components/article/ArticleCard";
+
+/**
+ * Tag pages are the highest-volume, lowest-value URLs on the site — roughly
+ * 45 of them, all in the sitemap. Uncached they were the single largest slice
+ * of the crawl bill.
+ */
+export const revalidate = 3600;
+
+/**
+ * Opts this route into ISR without prerendering anything at build time.
+ *
+ * WHY THE EMPTY ARRAY: `export const revalidate` alone does nothing on a
+ * dynamic segment — without generateStaticParams Next treats the route as
+ * fully dynamic and never writes it to the ISR cache (verify with
+ * `dynamicRoutes` in .next/prerender-manifest.json, which was empty before
+ * this). Returning [] generates no pages during `next build`, so the deploy
+ * stays independent of the database, while `dynamicParams` (true by default)
+ * renders each slug on first request and then caches it for `revalidate`.
+ */
+export async function generateStaticParams() {
+  return [];
+}
+
+
+/**
+ * Shared by generateMetadata and the page.
+ *
+ * These two ran the identical findUnique separately — the `cache()` pattern
+ * already used on the prompt/tool/article detail pages, just never applied
+ * here.
+ */
+const getTag = cache(async (slug: string) => {
+  return prisma.tag.findUnique({ where: { slug } });
+});
 
 export async function generateMetadata({
   params,
@@ -19,7 +55,7 @@ export async function generateMetadata({
   params: Promise<{ slug: string }>;
 }): Promise<Metadata> {
   const { slug } = await params;
-  const tag = await prisma.tag.findUnique({ where: { slug } });
+  const tag = await getTag(slug);
   if (!tag) return { title: "Tag not found" };
 
   return {
@@ -31,24 +67,32 @@ export async function generateMetadata({
 
 export default async function TagPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
-  const tag = await prisma.tag.findUnique({ where: { slug } });
+  const tag = await getTag(slug);
   if (!tag) notFound();
 
+  // All three were unbounded. A tag is a browse surface, not an archive — the
+  // cap keeps one over-applied tag from pulling the entire table.
   const [prompts, tools, articles] = await Promise.all([
     prisma.prompt.findMany({
+      ...JOIN,
       where: { ...PUBLISHED, tags: { some: { tagId: tag.id } } },
       include: promptCardInclude,
       orderBy: { copies: "desc" },
+      take: 24,
     }),
     prisma.tool.findMany({
+      ...JOIN,
       where: { ...PUBLISHED, tags: { some: { tagId: tag.id } } },
       include: toolCardInclude,
       orderBy: { name: "asc" },
+      take: 24,
     }),
     prisma.article.findMany({
+      ...JOIN,
       where: { ...PUBLISHED, tags: { some: { tagId: tag.id } } },
       include: articleCardInclude,
       orderBy: { publishedAt: "desc" },
+      take: 24,
     }),
   ]);
 

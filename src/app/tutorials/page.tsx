@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
-import { articleCardInclude, PUBLISHED } from "@/lib/queries";
+import { articleCardInclude, PUBLISHED, JOIN } from "@/lib/queries";
 import { siteConfig, absoluteUrl } from "@/lib/site-config";
 import ArticleCard from "@/components/article/ArticleCard";
 import { safeQuery } from "@/lib/safe-query";
@@ -24,9 +24,11 @@ export default async function TutorialsPage() {
   const articles = await safeQuery(
     () =>
       prisma.article.findMany({
+        ...JOIN,
         where: PUBLISHED,
         include: articleCardInclude,
         orderBy: [{ featured: "desc" }, { publishedAt: "desc" }],
+        take: 60,
       }),
     []
   );

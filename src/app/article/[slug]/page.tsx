@@ -1,11 +1,18 @@
 import { cache } from "react";
+import { after } from "next/server";
 import Link from "next/link";
 import Image from "next/image";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { Clock } from "lucide-react";
 import { prisma } from "@/lib/prisma";
-import { articleDetailInclude, articleCardInclude, PUBLISHED } from "@/lib/queries";
+import {
+  articleDetailInclude,
+  articleCardInclude,
+  commentInclude,
+  PUBLISHED,
+  JOIN,
+} from "@/lib/queries";
 import { siteConfig, absoluteUrl } from "@/lib/site-config";
 import { sanitizeHtml, stripHtml } from "@/lib/sanitize";
 import { formatDate } from "@/lib/utils";
@@ -20,8 +27,28 @@ import ArticleCard from "@/components/article/ArticleCard";
 import AffiliateDisclosure from "@/components/tool/AffiliateDisclosure";
 import { CategoryChip, DifficultyBadge } from "@/components/prompt/Badges";
 
+/** Busted on publish/edit by revalidateArticles() — see src/api/revalidate.ts. */
+export const revalidate = 1800;
+
+/**
+ * Opts this route into ISR without prerendering anything at build time.
+ *
+ * WHY THE EMPTY ARRAY: `export const revalidate` alone does nothing on a
+ * dynamic segment — without generateStaticParams Next treats the route as
+ * fully dynamic and never writes it to the ISR cache (verify with
+ * `dynamicRoutes` in .next/prerender-manifest.json, which was empty before
+ * this). Returning [] generates no pages during `next build`, so the deploy
+ * stays independent of the database, while `dynamicParams` (true by default)
+ * renders each slug on first request and then caches it for `revalidate`.
+ */
+export async function generateStaticParams() {
+  return [];
+}
+
+
 const getArticle = cache(async (slug: string) => {
   return prisma.article.findFirst({
+    ...JOIN,
     where: { slug, ...PUBLISHED },
     include: articleDetailInclude,
   });
@@ -74,35 +101,41 @@ export default async function ArticlePage({
   const article = await getArticle(slug);
   if (!article) notFound();
 
-  // Not awaited: a view counter must never delay the response, and a failed
-  // increment is not worth surfacing.
-  prisma.article
-    .update({ where: { id: article.id }, data: { views: { increment: 1 } } })
-    .catch(() => {});
+  // Deferred with after() so it runs once the response has been sent.
+  //
+  // WHY THIS MOVED: a write during render is a write on every request, which
+  // is what kept this page from ever being cacheable — all ~30 statements
+  // re-ran for every crawler hit, and bots inflated the count. Under after()
+  // the increment only fires on an actual cache MISS, so the counter now
+  // tracks renders rather than requests. If you want true per-visitor counts,
+  // move this to a client beacon like the /api/prompts/[id]/copy pattern.
+  after(() => {
+    prisma.article
+      .update({ where: { id: article.id }, data: { views: { increment: 1 } } })
+      .catch(() => {});
+  });
 
-  const comments = await prisma.comment.findMany({
-    where: { articleId: article.id, hidden: false, parentId: null },
-    include: {
-      author: { select: { id: true, name: true, image: true } },
-      replies: {
-        where: { hidden: false },
-        include: { author: { select: { id: true, name: true, image: true } } },
-        orderBy: { createdAt: "asc" },
+  // Comments and related posts are independent — no reason to await in series.
+  const [comments, related] = await Promise.all([
+    prisma.comment.findMany({
+      ...JOIN,
+      where: { articleId: article.id, hidden: false, parentId: null },
+      include: commentInclude,
+      orderBy: { createdAt: "desc" },
+      take: 100,
+    }),
+    prisma.article.findMany({
+      ...JOIN,
+      where: {
+        ...PUBLISHED,
+        id: { not: article.id },
+        ...(article.categoryId ? { categoryId: article.categoryId } : {}),
       },
-    },
-    orderBy: { createdAt: "desc" },
-  });
-
-  const related = await prisma.article.findMany({
-    where: {
-      ...PUBLISHED,
-      id: { not: article.id },
-      ...(article.categoryId ? { categoryId: article.categoryId } : {}),
-    },
-    include: articleCardInclude,
-    orderBy: { publishedAt: "desc" },
-    take: 3,
-  });
+      include: articleCardInclude,
+      orderBy: { publishedAt: "desc" },
+      take: 3,
+    }),
+  ]);
 
   const url = absoluteUrl(`/article/${article.slug}`);
   const description = (article.excerpt || stripHtml(article.content)).slice(0, 200);

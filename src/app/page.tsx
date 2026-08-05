@@ -6,7 +6,15 @@ import {
   toolCardInclude,
   articleCardInclude,
   PUBLISHED,
+  JOIN,
 } from "@/lib/queries";
+// Aliased: the bare names collide with the PromptCard/ToolCard components below.
+import type {
+  PromptCard as PromptCardData,
+  ToolCard as ToolCardData,
+  ArticleCardData,
+} from "@/lib/queries";
+import { safeQuery } from "@/lib/safe-query";
 import { OUTPUT_TYPES } from "@/lib/prompts";
 import { CLUSTERS, chipClass } from "@/lib/categories";
 import type { Metadata } from "next";
@@ -22,7 +30,17 @@ export const metadata: Metadata = {
   alternates: { canonical: siteConfig.url },
 };
 
-export const dynamic = "force-dynamic";
+/**
+ * Cached for 15 minutes rather than rendered per request.
+ *
+ * This page reads no cookies, no headers and no searchParams — nothing about
+ * it is per-visitor, so `force-dynamic` was making the most-crawled URL on the
+ * site pay 17 SQL statements on every bot hit for no benefit. Editors get
+ * fresher results than this anyway: the admin write routes call
+ * revalidatePrompts() / revalidateTools() / revalidateArticles(), each of
+ * which busts this page immediately on publish.
+ */
+export const revalidate = 900;
 
 function SectionHeading({
   title,
@@ -49,27 +67,41 @@ function SectionHeading({
 }
 
 export default async function HomePage() {
-  const [featuredPrompts, topTools, latestArticles, promptCount] = await Promise.all([
-    prisma.prompt.findMany({
-      where: PUBLISHED,
-      include: promptCardInclude,
-      orderBy: [{ featured: "desc" }, { copies: "desc" }],
-      take: 6,
-    }),
-    prisma.tool.findMany({
-      where: PUBLISHED,
-      include: toolCardInclude,
-      orderBy: [{ featured: "desc" }, { name: "asc" }],
-      take: 6,
-    }),
-    prisma.article.findMany({
-      where: PUBLISHED,
-      include: articleCardInclude,
-      orderBy: { publishedAt: "desc" },
-      take: 4,
-    }),
-    prisma.prompt.count({ where: { ...PUBLISHED, priceCents: 0 } }),
-  ]);
+  // safeQuery is required now that this page prerenders.
+  //
+  // Dropping `force-dynamic` moved the homepage into the build's static
+  // generation pass, which reintroduces the build-time database dependency
+  // that commit 83ceb7d removed. Wrapping it keeps the deploy independent of
+  // the database: a page built while Neon is scaled to zero renders empty and
+  // repairs itself at the next revalidation instead of failing the build.
+  const [featuredPrompts, topTools, latestArticles, promptCount] = await safeQuery(
+    () =>
+      Promise.all([
+        prisma.prompt.findMany({
+          ...JOIN,
+          where: PUBLISHED,
+          include: promptCardInclude,
+          orderBy: [{ featured: "desc" }, { copies: "desc" }],
+          take: 6,
+        }),
+        prisma.tool.findMany({
+          ...JOIN,
+          where: PUBLISHED,
+          include: toolCardInclude,
+          orderBy: [{ featured: "desc" }, { name: "asc" }],
+          take: 6,
+        }),
+        prisma.article.findMany({
+          ...JOIN,
+          where: PUBLISHED,
+          include: articleCardInclude,
+          orderBy: { publishedAt: "desc" },
+          take: 4,
+        }),
+        prisma.prompt.count({ where: { ...PUBLISHED, priceCents: 0 } }),
+      ]),
+    [[], [], [], 0] as [PromptCardData[], ToolCardData[], ArticleCardData[], number]
+  );
 
   return (
     <>

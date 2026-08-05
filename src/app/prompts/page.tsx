@@ -1,12 +1,27 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
 import Link from "next/link";
-import { prisma } from "@/lib/prisma";
 import { OUTPUT_TYPES } from "@/lib/prompts";
 import { siteConfig, absoluteUrl } from "@/lib/site-config";
 import PromptFilterBar from "@/components/prompt/PromptFilterBar";
 import PromptResults from "@/components/prompt/PromptResults";
 import { GridSkeleton } from "@/components/shared/Skeletons";
+import { getAiModels } from "@/api/aimodels";
+import { getCategories } from "@/api/categories";
+
+
+/**
+ * NOTE: this page awaits searchParams, so Next classifies the whole route
+ * Dynamic and this value does not currently take effect — the Suspense
+ * boundary around PromptResults isolates the *render*, not the route's cache
+ * mode. Confirm in the `next build` route table, where /prompts shows ƒ.
+ *
+ * Left in place because the per-request cost is already ~1 SQL statement: the
+ * model and category lookups come from the cache in src/api/, and the results
+ * grid is one joined query. Making the shell static would require moving the
+ * filter reads into a client component for no measurable saving.
+ */
+export const revalidate = 600;
 
 export const metadata: Metadata = {
   title: "AI prompt library",
@@ -35,13 +50,11 @@ export default async function PromptsPage({
     price: one(sp.price),
     sort: one(sp.sort),
   };
-
-  // Small, fast lookups for the filter bar. Kept out of the suspended child so
+  // Small, fast lookups for the filter bar, kept out of the suspended child so
   // the filter UI renders immediately and stays mounted between navigations.
-  const [models, categories] = await Promise.all([
-    prisma.aiModel.findMany({ orderBy: { order: "asc" }, select: { slug: true, name: true } }),
-    prisma.category.findMany({ orderBy: { order: "asc" }, select: { slug: true, name: true } }),
-  ]);
+  // Both are cached and tagged — see src/api/aimodels.ts for how failures are
+  // handled (each degrades to an empty option list rather than throwing).
+  const [models, categories] = await Promise.all([getAiModels(), getCategories()]);
 
   const activeCount = Object.entries(filters).filter(
     ([k, v]) => k !== "sort" && Boolean(v)

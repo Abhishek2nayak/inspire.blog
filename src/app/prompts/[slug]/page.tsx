@@ -5,7 +5,7 @@ import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { ArrowUpRight, Lightbulb } from "lucide-react";
 import { prisma } from "@/lib/prisma";
-import { promptDetailInclude, promptCardInclude, PUBLISHED } from "@/lib/queries";
+import { promptDetailInclude, promptCardInclude, PUBLISHED, JOIN } from "@/lib/queries";
 import { siteConfig, absoluteUrl } from "@/lib/site-config";
 import { getOutputTypeByValue } from "@/lib/prompts";
 import { formatNumber } from "@/lib/utils";
@@ -29,9 +29,36 @@ import {
   PricingBadge,
 } from "@/components/prompt/Badges";
 
+/**
+ * Cached for an hour; busted immediately on publish/edit by the
+ * revalidatePrompts() call in the admin write routes (src/api/revalidate.ts).
+ *
+ * Access control still works under caching: the paid-prompt body is stripped
+ * by resolvePromptAccess *below* this cache, per request. Only the published,
+ * non-secret shell is shared between visitors.
+ */
+export const revalidate = 3600;
+
+/**
+ * Opts this route into ISR without prerendering anything at build time.
+ *
+ * WHY THE EMPTY ARRAY: `export const revalidate` alone does nothing on a
+ * dynamic segment — without generateStaticParams Next treats the route as
+ * fully dynamic and never writes it to the ISR cache (verify with
+ * `dynamicRoutes` in .next/prerender-manifest.json, which was empty before
+ * this). Returning [] generates no pages during `next build`, so the deploy
+ * stays independent of the database, while `dynamicParams` (true by default)
+ * renders each slug on first request and then caches it for `revalidate`.
+ */
+export async function generateStaticParams() {
+  return [];
+}
+
+
 /** Shared by generateMetadata and the page so both hit the DB once. */
 const getPrompt = cache(async (slug: string) => {
   return prisma.prompt.findFirst({
+    ...JOIN,
     where: { slug, ...PUBLISHED },
     include: promptDetailInclude,
   });
@@ -99,6 +126,7 @@ export default async function PromptDetailPage({
   const showCopyAll = access.unlocked && bundled.length > 1;
 
   const related = await prisma.prompt.findMany({
+    ...JOIN,
     where: {
       ...PUBLISHED,
       id: { not: prompt.id },

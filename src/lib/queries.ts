@@ -11,6 +11,24 @@ import { Prisma } from "@prisma/client";
  * include makes that class of drift impossible.
  */
 
+/**
+ * Resolve an `include` as a single SQL statement (LATERAL JOIN) rather than
+ * one round trip per relation edge.
+ *
+ * WHY: Prisma's default `relationLoadStrategy` is "query" — it issues a
+ * separate statement per relation and stitches results in memory. Nothing in
+ * the calling code hints at this, so `promptDetailInclude` reads as one query
+ * and bills as eleven. That fan-out, not any N+1, was the dominant cost.
+ *
+ * Spread this into read queries that use an `include`:
+ *     prisma.prompt.findMany({ ...JOIN, where, include: promptCardInclude })
+ *
+ * ESCAPE HATCH: `relationJoins` is a Preview feature in Prisma 5.22. If a
+ * query ever returns a wrong shape, flip the value here to "query" to restore
+ * the old behaviour everywhere at once — no call site changes needed.
+ */
+export const JOIN = { relationLoadStrategy: "join" } as const;
+
 export const authorSelect = {
   id: true,
   name: true,

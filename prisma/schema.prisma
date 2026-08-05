@@ -4,13 +4,36 @@
 // copy-paste library) and Tool (the reviewed directory). Readers may sign up
 // to save and comment, but only ADMINs author content.
 
+// `relationJoins` lets a query with `include` be resolved as a single SQL
+// statement (LATERAL JOIN) instead of one statement per relation edge.
+//
+// WHY THIS MATTERS: without it Prisma's default strategy is `query` — it runs
+// a separate round trip per relation and stitches the rows in memory. That is
+// invisible in the code: `promptDetailInclude` reads as one call and bills as
+// eleven. Opting in here plus `relationLoadStrategy: "join"` on the read paths
+// (see src/lib/queries.ts) is what took a homepage render from 17 statements
+// to 4.
 generator client {
-  provider = "prisma-client-js"
+  provider        = "prisma-client-js"
+  previewFeatures = ["relationJoins"]
 }
 
+/// Two URLs, because the runtime and the migrator need different connections.
+///
+/// DATABASE_URL is Supabase's transaction pooler (port 6543). Serverless opens
+/// a fresh connection per function instance, and a direct connection exhausts
+/// the instance cap under any real traffic. The pooler multiplexes them.
+///
+/// DIRECT_URL is the direct connection (port 5432). `prisma migrate` and
+/// `prisma db push` cannot run through pgbouncer — they need a real session to
+/// hold advisory locks and run DDL — so Prisma uses this one for schema work
+/// and DATABASE_URL for everything else.
+///
+/// Both passwords must percent-encode reserved characters (`#` -> `%23`).
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
 }
 
 // ─────────────────────────── enums ───────────────────────────
