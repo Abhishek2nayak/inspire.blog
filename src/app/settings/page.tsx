@@ -13,6 +13,7 @@ import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
 import { getInitials } from "@/lib/utils";
+import { useProfile, useUpdateProfile } from "@/hooks/use-profile";
 import {
   User,
   Lock,
@@ -46,8 +47,8 @@ export default function SettingsPage() {
   const { data: session, status } = useSession();
   const router = useRouter();
   const { toast } = useToast();
-  const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
+  const updateProfile = useUpdateProfile();
+  const saving = updateProfile.isPending;
   const [savingPassword, setSavingPassword] = useState(false);
   const [emailNotifications, setEmailNotifications] = useState(true);
 
@@ -68,39 +69,32 @@ export default function SettingsPage() {
   });
 
   useEffect(() => {
-    if (status === "unauthenticated") {
-      router.push("/login");
-      return;
-    }
-    if (status === "authenticated") {
-      fetchProfile();
-    }
+    if (status === "unauthenticated") router.push("/login");
   }, [status, router]);
 
-  const fetchProfile = async () => {
-    try {
-      const res = await fetch("/api/auth/me");
-      if (!res.ok) throw new Error();
-      const data = await res.json();
-      setForm({
-        name: data.name || "",
-        bio: data.bio || "",
-        image: data.image || "",
-        website: data.website || "",
-        twitter: data.twitter || "",
-        github: data.github || "",
-        location: data.location || "",
-      });
-    } catch {
+  const {
+    data: profile,
+    isPending,
+    isError,
+  } = useProfile(status === "authenticated");
+  const loading = status !== "authenticated" || isPending;
+
+  // The query owns the server state; `form` is local draft state layered on
+  // top. Syncing on arrival (rather than rendering straight from the query)
+  // keeps the inputs editable without every keystroke fighting the cache.
+  useEffect(() => {
+    if (profile) setForm(profile);
+  }, [profile]);
+
+  useEffect(() => {
+    if (isError) {
       toast({
         title: "Failed to load profile",
         description: "Please refresh the page.",
         variant: "destructive",
       });
-    } finally {
-      setLoading(false);
     }
-  };
+  }, [isError, toast]);
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
@@ -112,26 +106,18 @@ export default function SettingsPage() {
     setPasswords((prev) => ({ ...prev, [e.target.name]: e.target.value }));
   };
 
-  const handleProfileSave = async (e: React.FormEvent) => {
+  const handleProfileSave = (e: React.FormEvent) => {
     e.preventDefault();
-    setSaving(true);
-    try {
-      const res = await fetch("/api/auth/me", {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(form),
-      });
-      if (!res.ok) throw new Error();
-      toast({ title: "Profile updated", description: "Your changes have been saved." });
-    } catch {
-      toast({
-        title: "Failed to save profile",
-        description: "Please try again.",
-        variant: "destructive",
-      });
-    } finally {
-      setSaving(false);
-    }
+    updateProfile.mutate(form, {
+      onSuccess: () =>
+        toast({ title: "Profile updated", description: "Your changes have been saved." }),
+      onError: (err) =>
+        toast({
+          title: "Failed to save profile",
+          description: err instanceof Error ? err.message : "Please try again.",
+          variant: "destructive",
+        }),
+    });
   };
 
   const handlePasswordSave = async (e: React.FormEvent) => {

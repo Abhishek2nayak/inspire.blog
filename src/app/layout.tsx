@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Inter, Fraunces } from "next/font/google";
 import AuthProvider from "@/components/shared/AuthProvider";
+import QueryProvider from "@/components/QueryProvider";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import ConditionalShell from "@/components/layout/ConditionalShell";
@@ -148,10 +149,12 @@ export default function RootLayout({
       </head>
       <body className="font-sans antialiased bg-background text-foreground min-h-screen flex flex-col">
         <AuthProvider>
-          <TooltipProvider delayDuration={300}>
-            <ConditionalShell>{children}</ConditionalShell>
-            <Toaster />
-          </TooltipProvider>
+          <QueryProvider>
+            <TooltipProvider delayDuration={300}>
+              <ConditionalShell>{children}</ConditionalShell>
+              <Toaster />
+            </TooltipProvider>
+          </QueryProvider>
         </AuthProvider>
       </body>
     </html>

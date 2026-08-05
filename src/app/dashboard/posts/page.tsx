@@ -1,8 +1,9 @@
 "use client";
 
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useMyArticles, useDeleteArticle, type DashboardArticle } from "@/hooks/use-articles";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
@@ -18,17 +19,6 @@ import { formatDate, cn } from "@/lib/utils";
 import { Edit, Trash2, Eye, MessageCircle, PenLine, FileText, Plus } from "lucide-react";
 
 type Tab = "all" | "published" | "draft";
-
-/** Mirrors what GET /api/articles actually returns (articleCardInclude). */
-interface DashboardArticle {
-  id: string;
-  title: string;
-  slug: string;
-  status: "DRAFT" | "REVIEW" | "PUBLISHED" | "ARCHIVED";
-  createdAt: string;
-  views: number;
-  _count: { comments: number; bookmarks: number };
-}
 
 const tabs: { key: Tab; label: string }[] = [
   { key: "all", label: "All" },
@@ -46,56 +36,41 @@ const STATUS_STYLE: Record<string, string> = {
 export default function DashboardPostsPage() {
   const router = useRouter();
   const { toast } = useToast();
-  const [articles, setArticles] = useState<DashboardArticle[]>([]);
-  const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<Tab>("all");
   const [deleteId, setDeleteId] = useState<string | null>(null);
-  const [deleting, setDeleting] = useState(false);
 
-  const fetchArticles = useCallback(async () => {
-    try {
-      const res = await fetch("/api/articles?mine=true&include_drafts=true");
-      if (!res.ok) throw new Error();
-      const data = await res.json();
+  // Shares its cache entry with /dashboard/analytics — see hooks/query-keys.ts.
+  const { data, isPending: loading, isError } = useMyArticles(true);
+  const articles: DashboardArticle[] = data ?? [];
 
-      // The API returns { articles: [...] }. Guard with Array.isArray rather
-      // than `data.articles || data` — if the shape ever changes again, this
-      // renders an empty list instead of throwing "filter is not a function".
-      setArticles(Array.isArray(data?.articles) ? data.articles : []);
-    } catch {
-      setArticles([]);
+  const deleteArticle = useDeleteArticle();
+  const deleting = deleteArticle.isPending;
+
+  // The toast lives in an effect rather than in the query, because React Query
+  // retries and refetches on its own schedule — firing it from queryFn would
+  // stack duplicate toasts on every retry.
+  useEffect(() => {
+    if (isError) {
       toast({
         title: "Failed to load articles",
         description: "Please refresh the page.",
         variant: "destructive",
       });
-    } finally {
-      setLoading(false);
     }
-  }, [toast]);
+  }, [isError, toast]);
 
-  useEffect(() => {
-    fetchArticles();
-  }, [fetchArticles]);
-
-  const handleDelete = async () => {
+  const handleDelete = () => {
     if (!deleteId) return;
-    setDeleting(true);
-    try {
-      const res = await fetch(`/api/articles/${deleteId}`, { method: "DELETE" });
-      if (!res.ok) throw new Error();
-      setArticles((prev) => prev.filter((p) => p.id !== deleteId));
-      toast({ title: "Article deleted" });
-    } catch {
-      toast({
-        title: "Failed to delete",
-        description: "Please try again.",
-        variant: "destructive",
-      });
-    } finally {
-      setDeleting(false);
-      setDeleteId(null);
-    }
+    deleteArticle.mutate(deleteId, {
+      onSuccess: () => toast({ title: "Article deleted" }),
+      onError: (e) =>
+        toast({
+          title: "Failed to delete",
+          description: e instanceof Error ? e.message : "Please try again.",
+          variant: "destructive",
+        }),
+      onSettled: () => setDeleteId(null),
+    });
   };
 
   const isPublished = (a: DashboardArticle) => a.status === "PUBLISHED";

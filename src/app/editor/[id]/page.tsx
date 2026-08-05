@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import BlogEditor from "@/components/editor/BlogEditor";
 import { useToast } from "@/hooks/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useArticle } from "@/hooks/use-articles";
 
 interface PostData {
   id?: string;
@@ -28,22 +29,28 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
   const router = useRouter();
   const { toast } = useToast();
 
-  const [post, setPost] = useState<PostData | null>(null);
-  const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     if (status === "unauthenticated") router.push("/login");
   }, [status, router]);
 
+  // `enabled` gates the request on an authenticated session, replacing the
+  // early-return guard. Cached per article id, so bouncing between the editor
+  // and the dashboard no longer refetches the post each time.
+  const {
+    data: post,
+    isPending,
+    isError,
+  } = useArticle<PostData>(id, status === "authenticated");
+  const loading = status !== "authenticated" || isPending;
+
   useEffect(() => {
-    if (status !== "authenticated") return;
-    fetch(`/api/articles/${id}`)
-      .then((r) => (r.ok ? r.json() : Promise.reject()))
-      .then((data) => setPost(data.post || data))
-      .catch(() => { toast({ title: "Post not found", variant: "destructive" }); router.push("/"); })
-      .finally(() => setLoading(false));
-  }, [id, status, router, toast]);
+    if (isError) {
+      toast({ title: "Post not found", variant: "destructive" });
+      router.push("/");
+    }
+  }, [isError, router, toast]);
 
   useEffect(() => {
     if (!post || !session?.user) return;

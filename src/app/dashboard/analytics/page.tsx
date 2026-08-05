@@ -1,51 +1,32 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useEffect } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
 import { Eye, Bookmark, MessageCircle, FileText, BarChart2 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useMyArticles, type DashboardArticle } from "@/hooks/use-articles";
 
-interface PostStat {
-  id: string;
-  title: string;
-  slug: string;
-  views: number;
-  readTime: number;
-  createdAt: string;
-  _count: {
-    comments: number;
-    bookmarks: number;
-  };
-}
+type PostStat = DashboardArticle;
 
 export default function AnalyticsPage() {
   const { toast } = useToast();
-  const [posts, setPosts] = useState<PostStat[]>([]);
-  const [loading, setLoading] = useState(true);
+
+  // Same hook and same query key as /dashboard/posts. Navigating between the
+  // two pages inside staleTime now costs zero requests — this page used to
+  // re-query the identical rows on every mount.
+  const { data, isPending: loading, isError } = useMyArticles(false);
+  const posts: PostStat[] = data ?? [];
 
   useEffect(() => {
-    fetchStats();
-  }, []);
-
-  const fetchStats = async () => {
-    try {
-      const res = await fetch("/api/articles?mine=true");
-      if (!res.ok) throw new Error();
-      const data = await res.json();
-      // Guarded: renders empty rather than throwing if the shape shifts.
-      setPosts(Array.isArray(data?.articles) ? data.articles : []);
-    } catch {
-      setPosts([]);
+    if (isError) {
       toast({
         title: "Failed to load analytics",
         description: "Please refresh the page.",
         variant: "destructive",
       });
-    } finally {
-      setLoading(false);
     }
-  };
+  }, [isError, toast]);
 
   const totalViews = posts.reduce((sum, p) => sum + p.views, 0);
   const totalSaves = posts.reduce((sum, p) => sum + (p._count?.bookmarks ?? 0), 0);

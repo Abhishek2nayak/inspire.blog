@@ -6,8 +6,9 @@ import { useRouter } from "next/navigation";
 import { Bookmark } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
+import { useToggleBookmark, type BookmarkKind } from "@/hooks/use-bookmark";
 
-type Kind = "ARTICLE" | "PROMPT" | "TOOL";
+type Kind = BookmarkKind;
 
 /**
  * Polymorphic save toggle. Signed-out users are sent to /login with a return
@@ -28,33 +29,36 @@ export default function SaveButton({
   const router = useRouter();
   const { toast } = useToast();
   const [saved, setSaved] = useState(initialSaved);
-  const [busy, setBusy] = useState(false);
 
-  async function toggle() {
+  const toggleBookmark = useToggleBookmark();
+  const busy = toggleBookmark.isPending;
+
+  function toggle() {
     if (status !== "authenticated") {
       router.push(`/login?callbackUrl=${encodeURIComponent(window.location.pathname)}`);
       return;
     }
+    if (busy) return; // a second click mid-flight would race the first
 
-    setBusy(true);
     const next = !saved;
     setSaved(next); // optimistic
 
-    try {
-      const res = await fetch("/api/bookmarks", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ kind, id }),
-      });
-      if (!res.ok) throw new Error();
-      const data = await res.json();
-      setSaved(data.saved);
-    } catch {
-      setSaved(!next); // roll back
-      toast({ title: "Couldn't save", variant: "destructive" });
-    } finally {
-      setBusy(false);
-    }
+    toggleBookmark.mutate(
+      { kind, id },
+      {
+        // Trust the server's answer over the optimistic guess — they diverge
+        // if the row was already toggled from another tab.
+        onSuccess: (serverSaved) => setSaved(serverSaved),
+        onError: (err) => {
+          setSaved(!next); // roll back
+          toast({
+            title: "Couldn't save",
+            description: err instanceof Error ? err.message : undefined,
+            variant: "destructive",
+          });
+        },
+      }
+    );
   }
 
   return (
