@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { Prisma } from "@prisma/client";
+import { sqlCount } from "./prisma";
 
 /**
  * Wrap a route handler so a thrown error becomes a JSON response instead of
@@ -18,8 +19,19 @@ export function withApiErrors<T extends unknown[]>(
   handler: (...args: T) => Promise<Response>
 ) {
   return async (...args: T): Promise<Response> => {
+    // Statement accounting per route. Off unless LOG_SQL is set, so it costs
+    // nothing in production. Run `LOG_SQL=1 npm run dev`, hit an endpoint, and
+    // the log line tells you what that one request actually cost the database
+    // — which is the number to watch, not the count of prisma.* calls.
+    const before = process.env.LOG_SQL ? sqlCount() : 0;
+
     try {
-      return await handler(...args);
+      const res = await handler(...args);
+      if (process.env.LOG_SQL) {
+        const path = args[0] instanceof Request ? new URL(args[0].url).pathname : "?";
+        console.log(`[ops] ${path} → ${sqlCount() - before} SQL statements`);
+      }
+      return res;
     } catch (error) {
       // Always log — this is what shows up in the platform's function logs.
       console.error("[api] unhandled error:", error);
