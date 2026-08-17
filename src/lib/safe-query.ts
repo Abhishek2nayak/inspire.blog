@@ -18,15 +18,26 @@ export async function safeQuery<T>(fn: () => Promise<T>, fallback: T): Promise<T
     return await fn();
   } catch (error) {
     const code = (error as { code?: string })?.code;
-    // P2021 = table does not exist, P1001 = cannot reach database server.
+    // P2021 = table does not exist, P1001 = cannot reach database server,
+    // P1017 = server closed the connection.
     const expected = code === "P2021" || code === "P1001" || code === "P1017";
 
-    console.warn(
-      `[safe-query] ${expected ? `database not ready (${code})` : "query failed"} — ` +
-        "rendering fallback. If this appears in a production build, run " +
-        "`prisma db push` (or migrate deploy) against the deploy database."
-    );
-    if (!expected) console.warn(error);
+    if (expected) {
+      console.warn(
+        `[safe-query] database not ready (${code}) — rendering fallback. If ` +
+          "this appears in a production build, run `prisma db push` (or " +
+          "migrate deploy) against the deploy database."
+      );
+    } else {
+      // Anything else is a real, unexplained bug — a query shape mismatch, a
+      // relationJoins/pgbouncer incompatibility, etc. Previously this was
+      // logged at `warn` and easy to miss; log it at `error` with the full
+      // object so it's unmissable in the platform's function logs. Still
+      // falls back rather than throwing — a page rendering empty stays far
+      // better than a hard 500 for real visitors — but "empty" should never
+      // again mean "silent."
+      console.error("[safe-query] unexpected error — rendering fallback:", error);
+    }
 
     return fallback;
   }

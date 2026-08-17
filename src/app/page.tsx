@@ -74,7 +74,7 @@ export default async function HomePage() {
   // that commit 83ceb7d removed. Wrapping it keeps the deploy independent of
   // the database: a page built while Neon is scaled to zero renders empty and
   // repairs itself at the next revalidation instead of failing the build.
-  const [featuredPrompts, topTools, latestArticles, promptCount] = await safeQuery(
+  const [featuredPrompts, topTools, latestArticles, promptCategories] = await safeQuery(
     () =>
       Promise.all([
         prisma.prompt.findMany({
@@ -98,9 +98,34 @@ export default async function HomePage() {
           orderBy: { publishedAt: "desc" },
           take: 4,
         }),
-        prisma.prompt.count({ where: { ...PUBLISHED, priceCents: 0 } }),
+        // Category-wise prompt shelves — each category that has at least one
+        // published prompt gets its own row further down the page, so
+        // browsing by topic doesn't require a click through to /categories.
+        prisma.category.findMany({
+          ...JOIN,
+          where: { prompts: { some: PUBLISHED } },
+          orderBy: { order: "asc" },
+          take: 6,
+          select: {
+            id: true,
+            name: true,
+            slug: true,
+            chip: true,
+            prompts: {
+              where: PUBLISHED,
+              include: promptCardInclude,
+              orderBy: [{ featured: "desc" }, { copies: "desc" }],
+              take: 4,
+            },
+          },
+        }),
       ]),
-    [[], [], [], 0] as [PromptCardData[], ToolCardData[], ArticleCardData[], number]
+    [[], [], [], []] as [
+      PromptCardData[],
+      ToolCardData[],
+      ArticleCardData[],
+      { id: string; name: string; slug: string; chip: string; prompts: PromptCardData[] }[],
+    ]
   );
 
   return (
@@ -110,7 +135,7 @@ export default async function HomePage() {
         <div className="mx-auto max-w-6xl px-4 py-16 sm:py-24">
           <div className="max-w-3xl">
             <p className="mb-4 text-xs font-semibold uppercase tracking-[0.2em] text-green-text">
-              {promptCount} free prompts · no signup needed
+              Free AI prompts for ChatGPT, Gemini &amp; Midjourney · no signup needed
             </p>
             <h1 className="font-display text-4xl font-bold leading-[1.1] tracking-tight text-foreground sm:text-6xl">
               Make the thing.{" "}
@@ -119,8 +144,9 @@ export default async function HomePage() {
               </span>
             </h1>
             <p className="mt-6 max-w-xl text-lg leading-relaxed text-muted-foreground">
-              Copy-paste AI prompts for YouTube thumbnails, reels, Instagram posts and banners —
-              each with the model and settings it was built for.
+              Browse and copy free AI prompts for YouTube thumbnails, reels, Instagram posts and
+              banners — each tested on the model it was built for, ready to paste into ChatGPT,
+              Gemini or Midjourney.
             </p>
 
             <div className="mt-8 flex flex-wrap gap-3">
@@ -204,6 +230,27 @@ export default async function HomePage() {
           </div>
         </div>
       </section>
+
+      {/* ── Category-wise prompts ───────────────────────────────────────
+          A shelf per category, so browsing by topic doesn't require a
+          click through to /categories — the topic cards above are the
+          index, these are the preview. */}
+      {promptCategories.map((category) =>
+        category.prompts.length > 0 ? (
+          <section key={category.id} className="mx-auto max-w-6xl px-4 py-14">
+            <SectionHeading
+              title={`${category.name} prompts`}
+              href={`/prompts?category=${category.slug}`}
+              linkLabel="All"
+            />
+            <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+              {category.prompts.map((p) => (
+                <PromptCard key={p.id} prompt={p} featured={p.featured} />
+              ))}
+            </div>
+          </section>
+        ) : null
+      )}
 
       {/* ── Tools ────────────────────────────────────────────────────── */}
       {topTools.length > 0 && (

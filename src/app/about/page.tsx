@@ -1,27 +1,23 @@
 import { Metadata } from "next";
 import { BookOpen, Users, Zap, Github, Twitter, Code } from "lucide-react";
 import Link from "next/link";
+import { absoluteUrl } from "@/lib/site-config";
 
 export const metadata: Metadata = {
-  title:
-    "About Makeframe | Best AI Tools, AI News, Tutorials & AI Community",
+  title: "About",
   description:
     "Makeframe is a prompt library and marketplace for creators — copy-paste AI prompts for thumbnails, reels, posts and banners, each shown with the output it produced.",
   keywords: [
-    "AI tools",
-    "best AI tools",
-    "Claude AI",
-    "Anthropic Claude",
-    "generative AI",
-    "AI tutorials",
-    "machine learning blogs",
-    "AI productivity tools",
-    "latest AI news",
-    "AI software",
-    "Gemini AI",
-    "AI community",
-    "artificial intelligence blog",
+    "AI prompt library",
+    "AI prompts for creators",
+    "Midjourney prompts",
+    "Nano Banana prompts",
+    "ChatGPT Image prompts",
+    "AI image prompt generator",
+    "AI video prompts",
+    "prompt marketplace",
   ],
+  alternates: { canonical: absoluteUrl("/about") },
 };
 
 export default function AboutPage() {

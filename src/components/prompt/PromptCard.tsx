@@ -1,6 +1,6 @@
 import Link from "next/link";
 import Image from "next/image";
-import { Copy } from "lucide-react";
+import { Copy, Heart } from "lucide-react";
 import { Lock } from "lucide-react";
 import { cn, formatNumber } from "@/lib/utils";
 import { formatPrice } from "@/lib/prompt-access";
@@ -59,7 +59,7 @@ export default function PromptCard({
     >
       <Link
         href={`/prompts/${prompt.slug}`}
-        className="relative block aspect-[4/3] overflow-hidden border-b border-border bg-muted"
+        className="relative block aspect-[4/4] overflow-hidden border-b border-border bg-muted"
       >
         {example ? (
           example.isVideo ? (
@@ -125,6 +125,12 @@ export default function PromptCard({
             <Copy className="h-3 w-3" />
             {formatNumber(prompt.copies)} copies
           </span>
+          {prompt.likeCount > 0 && (
+            <span className="inline-flex items-center gap-1">
+              <Heart className="h-3 w-3" />
+              {formatNumber(prompt.likeCount)}
+            </span>
+          )}
           {prompt.sales > 0 && <span>{formatNumber(prompt.sales)} sold</span>}
         </div>
       </div>

@@ -136,6 +136,7 @@ export default function PromptForm({
           width: upData.width,
           height: upData.height,
           alt: v.title,
+          isVideo: file.type.startsWith("video/"),
         }),
       });
       if (!res.ok) throw new Error(await describeApiError(res));
@@ -347,7 +348,18 @@ export default function PromptForm({
               {rows.map((r) => (
                 <div key={r.id} className="group relative overflow-hidden rounded-md border-2 border-ink">
                   <div className="relative aspect-[4/3] bg-muted">
-                    <Image src={r.url} alt={r.alt ?? ""} fill sizes="200px" className="object-cover" />
+                    {r.isVideo ? (
+                      <video
+                        src={r.url}
+                        muted
+                        loop
+                        playsInline
+                        preload="metadata"
+                        className="h-full w-full object-cover"
+                      />
+                    ) : (
+                      <Image src={r.url} alt={r.alt ?? ""} fill sizes="200px" className="object-cover" />
+                    )}
                   </div>
                   <button
                     onClick={() => removeExample(r.id)}
@@ -368,10 +380,14 @@ export default function PromptForm({
             )}
           >
             {uploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
-            {uploading ? "Uploading…" : "Upload example image"}
+            {uploading
+              ? "Uploading…"
+              : v.kind === "VIDEO"
+                ? "Upload example video"
+                : "Upload example image"}
             <input
               type="file"
-              accept="image/*"
+              accept={v.kind === "VIDEO" ? "video/mp4,video/webm,video/quicktime" : "image/*"}
               className="hidden"
               onChange={(e) => {
                 const f = e.target.files?.[0];

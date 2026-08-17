@@ -4,7 +4,7 @@ import React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn, getInitials } from "@/lib/utils";
-import { FileText, BarChart2, LayoutDashboard, Sparkles, Wand2, Inbox } from "lucide-react";
+import { FileText, BarChart2, LayoutDashboard, Sparkles, Wand2, Inbox, Tag } from "lucide-react";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
 
@@ -13,6 +13,7 @@ import { Separator } from "@/components/ui/separator";
 const navItems = [
   { href: "/dashboard/review", label: "Review queue", icon: Inbox },
   { href: "/dashboard/prompts", label: "Prompts", icon: Sparkles },
+  { href: "/dashboard/categories", label: "Categories", icon: Tag },
   { href: "/dashboard/posts", label: "Articles", icon: FileText },
   { href: "/dashboard/generate", label: "AI Writer", icon: Wand2 },
   { href: "/dashboard/analytics", label: "Analytics", icon: BarChart2 },

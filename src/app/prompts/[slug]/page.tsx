@@ -9,6 +9,7 @@ import { promptDetailInclude, promptCardInclude, PUBLISHED, JOIN } from "@/lib/q
 import { siteConfig, absoluteUrl } from "@/lib/site-config";
 import { getOutputTypeByValue } from "@/lib/prompts";
 import { formatNumber } from "@/lib/utils";
+import { getCurrentUser } from "@/lib/session";
 import {
   resolvePromptAccess,
   isPaid,
@@ -20,6 +21,9 @@ import CopyBlock from "@/components/prompt/CopyBlock";
 import CopyEverything from "@/components/prompt/CopyEverything";
 import LockedPrompt from "@/components/prompt/LockedPrompt";
 import SaveButton from "@/components/shared/SaveButton";
+import LikeButton from "@/components/prompt/LikeButton";
+import FillPromptDialog from "@/components/prompt/FillPromptDialog";
+import UseInAI from "@/components/prompt/UseInAI";
 import PromptCard from "@/components/prompt/PromptCard";
 import {
   CategoryChip,
@@ -115,6 +119,14 @@ export default async function PromptDetailPage({
   const output = getOutputTypeByValue(prompt.outputType);
   const access = await resolvePromptAccess(prompt);
   const paid = isPaid(prompt);
+
+  const currentUser = await getCurrentUser();
+  const myLike = currentUser?.id
+    ? await prisma.like.findUnique({
+        where: { userId_promptId: { userId: currentUser.id, promptId: prompt.id } },
+        select: { id: true },
+      })
+    : null;
 
   // "Copy everything" only earns its place when there is more than one piece
   // to stitch together — otherwise it just duplicates the button below it.
@@ -267,6 +279,11 @@ export default async function PromptDetailPage({
               {prompt.aspectRatio && <> · {prompt.aspectRatio}</>}
             </p>
             <SaveButton kind="PROMPT" id={prompt.id} />
+            <LikeButton
+              promptId={prompt.id}
+              initialLiked={Boolean(myLike)}
+              initialCount={prompt.likeCount}
+            />
           </div>
         </header>
 
@@ -338,6 +355,15 @@ export default async function PromptDetailPage({
               </code>
             </div>
           )}
+
+          {access.unlocked && (
+            <div className="mt-4 flex flex-wrap items-start gap-6 w-100">
+              <FillPromptDialog text={buildFullPrompt(prompt)} promptId={prompt.id} />
+              <UseInAI text={buildFullPrompt(prompt)} className="d-flex" />
+            </div>
+          )}
+
+
 
           {prompt.negative && access.unlocked && (
             <div className="mt-4">

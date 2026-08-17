@@ -2,8 +2,10 @@ import { NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/session";
 import cloudinary from "@/lib/cloudinary";
 
-const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/gif", "image/webp", "image/svg+xml"];
-const MAX_SIZE = 5 * 1024 * 1024; // 5 MB
+const ALLOWED_IMAGE_TYPES = ["image/jpeg", "image/png", "image/gif", "image/webp", "image/svg+xml"];
+const ALLOWED_VIDEO_TYPES = ["video/mp4", "video/webm", "video/quicktime"];
+const MAX_IMAGE_SIZE = 5 * 1024 * 1024; // 5 MB
+const MAX_VIDEO_SIZE = 40 * 1024 * 1024; // 40 MB
 
 export async function POST(request: Request) {
   try {
@@ -40,15 +42,28 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "No file provided" }, { status: 400 });
     }
 
-    if (!ALLOWED_TYPES.includes(file.type)) {
-      return NextResponse.json(
-        { error: "Invalid file type. Only JPEG, PNG, GIF, WebP and SVG are allowed." },
-        { status: 400 }
-      );
-    }
+    const isVideo = file.type.startsWith("video/");
 
-    if (file.size > MAX_SIZE) {
-      return NextResponse.json({ error: "File size exceeds 5 MB limit." }, { status: 400 });
+    if (isVideo) {
+      if (!ALLOWED_VIDEO_TYPES.includes(file.type)) {
+        return NextResponse.json(
+          { error: "Invalid video type. Only MP4, WebM and MOV are allowed." },
+          { status: 400 }
+        );
+      }
+      if (file.size > MAX_VIDEO_SIZE) {
+        return NextResponse.json({ error: "File size exceeds 40 MB limit." }, { status: 400 });
+      }
+    } else {
+      if (!ALLOWED_IMAGE_TYPES.includes(file.type)) {
+        return NextResponse.json(
+          { error: "Invalid file type. Only JPEG, PNG, GIF, WebP and SVG are allowed." },
+          { status: 400 }
+        );
+      }
+      if (file.size > MAX_IMAGE_SIZE) {
+        return NextResponse.json({ error: "File size exceeds 5 MB limit." }, { status: 400 });
+      }
     }
 
     const bytes = await file.arrayBuffer();
@@ -57,7 +72,8 @@ export async function POST(request: Request) {
 
     const result = await cloudinary.uploader.upload(base64, {
       folder: "makeframe",
-      transformation: [{ quality: "auto", fetch_format: "auto" }],
+      resource_type: isVideo ? "video" : "image",
+      ...(isVideo ? {} : { transformation: [{ quality: "auto", fetch_format: "auto" }] }),
     });
 
     return NextResponse.json(

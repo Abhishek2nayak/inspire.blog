@@ -135,6 +135,7 @@ model User {
   bookmarks Bookmark[]
   purchases Purchase[]
   approvals Prompt[]   @relation("PromptApprover")
+  likes     Like[]
 
   @@index([role])
 }
@@ -343,6 +344,10 @@ model Prompt {
   /// Clipboard copies. The engagement metric that actually matters here,
   /// and the ranking key for "most copied".
   copies      Int           @default(0)
+  /// Denormalized count of Like rows. Same rationale as `copies`: the
+  /// ranking key for "most liked" / trending, without a COUNT aggregate on
+  /// every listing query. Kept in sync by the like toggle endpoint.
+  likeCount   Int           @default(0)
 
   // ── Marketplace ────────────────────────────────────────────────────
   /// Price in the smallest currency unit (paise / cents). 0 means free.
@@ -382,6 +387,7 @@ model Prompt {
   articles   ArticlePrompt[]
   bookmarks  Bookmark[]
   comments   Comment[]
+  likes      Like[]
 
   @@index([status, publishedAt(sort: Desc)])
   @@index([outputType, status])
@@ -391,6 +397,7 @@ model Prompt {
   @@index([status, priceCents])
   @@index([authorId, status])
   @@index([status, sales(sort: Desc)])
+  @@index([status, likeCount(sort: Desc)])
 }
 
 /// A completed (or attempted) purchase of a paid prompt.
@@ -575,4 +582,20 @@ model Bookmark {
   @@unique([userId, promptId])
   @@unique([userId, toolId])
   @@index([userId, kind, createdAt])
+}
+
+/// A user's like on a prompt. Separate from Bookmark: liking is a public
+/// engagement/trending signal, saving is a private "read later" list — they
+/// answer different questions and a reader may want one without the other.
+model Like {
+  id        String   @id @default(cuid())
+  userId    String
+  promptId  String
+  createdAt DateTime @default(now())
+
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  prompt Prompt @relation(fields: [promptId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, promptId])
+  @@index([promptId])
 }

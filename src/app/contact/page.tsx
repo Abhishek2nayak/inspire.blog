@@ -1,5 +1,5 @@
 import { Metadata } from "next";
-import { siteConfig } from "@/lib/site-config";
+import { siteConfig, absoluteUrl } from "@/lib/site-config";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -7,9 +7,10 @@ import { Label } from "@/components/ui/label";
 import { Mail, MessageSquare, MapPin } from "lucide-react";
 
 export const metadata: Metadata = {
-  title: "Contact Us | Makeframe",
+  title: "Contact Us",
   description:
     "Get in touch with the Makeframe team. We'd love to hear from you.",
+  alternates: { canonical: absoluteUrl("/contact") },
 };
 
 export default function ContactPage() {

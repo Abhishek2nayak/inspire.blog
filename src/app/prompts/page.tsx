@@ -24,9 +24,9 @@ import { getCategories } from "@/api/categories";
 export const revalidate = 600;
 
 export const metadata: Metadata = {
-  title: "AI prompt library",
+  title: "Free AI Prompt Library",
   description:
-    "Copy-paste AI prompts for YouTube thumbnails, Instagram posts, reels, banners and more — each with the model and settings that produced it.",
+    "Free, copy-paste AI prompts for YouTube thumbnails, Instagram posts, reels and banners — ready to paste into ChatGPT, Gemini or Midjourney.",
   alternates: { canonical: absoluteUrl("/prompts") },
 };
 

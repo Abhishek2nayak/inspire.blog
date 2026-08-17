@@ -84,7 +84,7 @@ export const OUTPUT_TYPES: OutputTypeDef[] = [
     short: "Carousels",
     tagline: "Swipeable, consistent sets",
     description:
-      "Prompts for multi-slide Instagram carousels where every frame shares a visual system — consistent palette, type and lighting across 5 to 10 slides.",
+      "AI image prompts for multi-slide Instagram carousels where every frame shares a visual system — consistent palette, type and lighting across 5 to 10 slides.",
     ratio: "4:5",
     chip: "lilac",
   },
@@ -95,7 +95,7 @@ export const OUTPUT_TYPES: OutputTypeDef[] = [
     short: "Stories",
     tagline: "Full-bleed vertical",
     description:
-      "Full-bleed 9:16 backgrounds and story frames with deliberate empty space for stickers, polls and captions.",
+      "AI image prompts for Instagram stories — full-bleed 9:16 backgrounds and story frames with deliberate empty space for stickers, polls and captions.",
     ratio: "9:16",
     chip: "lilac",
   },
@@ -106,7 +106,7 @@ export const OUTPUT_TYPES: OutputTypeDef[] = [
     short: "Banners",
     tagline: "Wide, and safe to crop",
     description:
-      "Prompts for YouTube channel art, X headers, LinkedIn banners and website heroes — wide compositions that survive aggressive centre-cropping across devices.",
+      "AI prompts for YouTube channel art, X headers, LinkedIn banners and website heroes — wide compositions that survive aggressive centre-cropping across devices.",
     chip: "yellow",
     ratio: "16:9",
   },
@@ -117,7 +117,7 @@ export const OUTPUT_TYPES: OutputTypeDef[] = [
     short: "Ads",
     tagline: "Built to convert",
     description:
-      "Paid-social creative prompts — hero shots, before/after frames, UGC-style scenes and offer cards with room reserved for headline and CTA.",
+      "AI image prompts for paid-social creative — hero shots, before/after frames, UGC-style scenes and offer cards with room reserved for headline and CTA.",
     ratio: "1:1",
     chip: "coral",
   },
@@ -139,7 +139,7 @@ export const OUTPUT_TYPES: OutputTypeDef[] = [
     short: "Logos",
     tagline: "Simple, scalable marks",
     description:
-      "Prompts for logo concepts, monograms and app icons that stay legible when scaled down — plus how to iterate a concept into something usable.",
+      "AI prompts for logo concepts, monograms and app icons that stay legible when scaled down — plus how to iterate a concept into something usable.",
     ratio: "1:1",
     chip: "yellow",
   },
@@ -150,7 +150,7 @@ export const OUTPUT_TYPES: OutputTypeDef[] = [
     short: "Posters",
     tagline: "Print-ready layouts",
     description:
-      "Event posters, flyers and announcement graphics with real typographic hierarchy and space reserved for the details that matter.",
+      "AI image prompts for event posters, flyers and announcement graphics — with real typographic hierarchy and space reserved for the details that matter.",
     ratio: "2:3",
     chip: "lilac",
   },

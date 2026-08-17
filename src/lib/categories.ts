@@ -19,7 +19,7 @@ export const CLUSTERS: ClusterDef[] = [
     name: "AI Image & Design",
     tagline: "Thumbnails, posts & banners",
     description:
-      "AI image generators for YouTube thumbnails, Instagram posts, banners, logos and product shots — with copy-paste prompts, worked examples, and honest notes on what each tool actually does well.",
+      "AI image generators for YouTube thumbnails, Instagram posts, banners, logos and product shots — with copy-paste AI image prompts, worked examples, and honest notes on what each tool actually does well.",
     chip: "coral",
   },
   {
@@ -27,7 +27,7 @@ export const CLUSTERS: ClusterDef[] = [
     name: "AI Video & Audio",
     tagline: "Reels, shorts & voiceovers",
     description:
-      "Text-to-video, AI editing, voiceovers and music for creators — practical prompts and step-by-step guides for making reels and shorts that hold attention.",
+      "Text-to-video, AI editing, voiceovers and music for creators — practical AI video prompts and step-by-step guides for making reels and shorts that hold attention.",
     chip: "green",
   },
   {

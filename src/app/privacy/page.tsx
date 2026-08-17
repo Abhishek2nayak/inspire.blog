@@ -1,10 +1,11 @@
 import { Metadata } from "next";
-import { siteConfig } from "@/lib/site-config";
+import { siteConfig, absoluteUrl } from "@/lib/site-config";
 import Link from "next/link";
 
 export const metadata: Metadata = {
-  title: "Privacy Policy | Makeframe",
+  title: "Privacy Policy",
   description: "Privacy Policy and GDPR compliance information for Makeframe.",
+  alternates: { canonical: absoluteUrl("/privacy") },
 };
 
 export default function PrivacyPolicyPage() {

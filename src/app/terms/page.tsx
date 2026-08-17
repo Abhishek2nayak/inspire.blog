@@ -1,10 +1,11 @@
 import { Metadata } from "next";
-import { siteConfig } from "@/lib/site-config";
+import { siteConfig, absoluteUrl } from "@/lib/site-config";
 import Link from "next/link";
 
 export const metadata: Metadata = {
-  title: "Terms of Service | Makeframe",
+  title: "Terms of Service",
   description: "Terms of Service and Usage Guidelines for Makeframe.",
+  alternates: { canonical: absoluteUrl("/terms") },
 };
 
 export default function TermsOfServicePage() {
