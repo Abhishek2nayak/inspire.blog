@@ -49,3 +49,4 @@ public/uploads/*
 
 # local db snapshots (may contain user data)
 /backups
+.env*
