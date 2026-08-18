@@ -34,29 +34,16 @@ import {
 } from "@/components/prompt/Badges";
 
 /**
- * Cached for an hour; busted immediately on publish/edit by the
- * revalidatePrompts() call in the admin write routes (src/api/revalidate.ts).
- *
- * Access control still works under caching: the paid-prompt body is stripped
- * by resolvePromptAccess *below* this cache, per request. Only the published,
- * non-secret shell is shared between visitors.
+ * Fully dynamic, not ISR — this page calls getCurrentUser() (reads the
+ * session cookie via next-auth) to resolve like-status and paid-prompt
+ * access per visitor. That's a Next.js "Dynamic API," and a route can't mix
+ * "cache this response for every future visitor" with "this response
+ * depends on who's asking" — trying to do both is exactly what threw
+ * DYNAMIC_SERVER_USAGE and 500'd every prompt page in production. `revalidate`
+ * + an empty `generateStaticParams` (the previous ISR setup here) only works
+ * for routes that render the same output for everyone; this one doesn't.
  */
-export const revalidate = 3600;
-
-/**
- * Opts this route into ISR without prerendering anything at build time.
- *
- * WHY THE EMPTY ARRAY: `export const revalidate` alone does nothing on a
- * dynamic segment — without generateStaticParams Next treats the route as
- * fully dynamic and never writes it to the ISR cache (verify with
- * `dynamicRoutes` in .next/prerender-manifest.json, which was empty before
- * this). Returning [] generates no pages during `next build`, so the deploy
- * stays independent of the database, while `dynamicParams` (true by default)
- * renders each slug on first request and then caches it for `revalidate`.
- */
-export async function generateStaticParams() {
-  return [];
-}
+export const dynamic = "force-dynamic";
 
 
 /** Shared by generateMetadata and the page so both hit the DB once. */
